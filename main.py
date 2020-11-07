@@ -40,7 +40,7 @@ def h_filter(ccs):
     Heuristic filter.
 
     Filters out not-text connected components (CCs) from the input ccs.
-    
+
     Parameters:
         css: CCs (contours) of an image
 
