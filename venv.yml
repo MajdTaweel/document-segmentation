@@ -27,7 +27,7 @@ dependencies:
   - numpy=1.19.4=py39h6635163_0
   - opencv=4.5.0=py39_2
   - openssl=1.1.1h=he774522_0
-  - pip=20.2.4=py_0
+  - pip=20.2.4=py39haa95532_0
   - py-opencv=4.5.0=py39h9cd51e4_2
   - pycodestyle=2.6.0=py_0
   - python=3.9.0=h408a966_4_cpython
