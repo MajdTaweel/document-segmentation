@@ -18,9 +18,6 @@ class HeuristicFilter:
 
         Filters out not-text connected components (CCs) from the input ccs.
 
-        Parameters:
-            css: CCs (contours) of an image
-
         Returns:
             ccs_text: CCs of text components
             ccs_img: CCs of non_text components
@@ -51,7 +48,7 @@ class HeuristicFilter:
         return ccs_noise
 
     def __filter_noise(self, ccs_noise):
-        cv.drawContours(self.__img, ccs_noise, -1, (255, 255, 255), -1)
+        cv.drawContours(self.__img, ccs_noise, -1, (0, 0, 0), -1)
         ccs = self.__get_ccs()
         return ccs
 
@@ -61,8 +58,8 @@ class HeuristicFilter:
             if self.__has_descendants_more_than_t_inside(ccs, i):
                 ccs_non_text.append(cc)
                 x, y, w, h = cv.boundingRect(cc)
-                cv.rectangle(self.__img, (x, y), (x + w, y + h),
-                             (255, 255, 255), -1)
+                # cv.rectangle(self.__img, (x, y), (x + w, y + h), (0, 0, 0), -1)
+                cv.drawContours(self.__img, [cc], -1, (0, 0, 0), -1)
 
         ccs_text = self.__get_ccs()
 
