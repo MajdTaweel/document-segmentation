@@ -3,3 +3,7 @@
 venv
 __pycache__
 img
+*.png
+*.jpg
+*.jpeg
+*.bmp
