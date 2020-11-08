@@ -57,7 +57,7 @@ class HeuristicFilter:
         for i, cc in enumerate(ccs):
             if self.__has_descendants_more_than_t_inside(ccs, i):
                 ccs_non_text.append(cc)
-                x, y, w, h = cv.boundingRect(cc)
+                # x, y, w, h = cv.boundingRect(cc)
                 # cv.rectangle(self.__img, (x, y), (x + w, y + h), (0, 0, 0), -1)
                 cv.drawContours(self.__img, [cc], -1, (0, 0, 0), -1)
 
