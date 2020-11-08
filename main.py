@@ -6,9 +6,9 @@ T_INSIDE = 4
 
 
 def main():
-    src = cv.imread('img/triangles.png', cv.IMREAD_UNCHANGED)
+    src = cv.imread('img/la.png', cv.IMREAD_UNCHANGED)
 
-    thresh = threshold(src)
+    thresh = cv.bitwise_not(threshold(src))
 
     ccs, hierarchy = find_ccs(thresh)
 
@@ -57,67 +57,55 @@ def h_filter(img, ccs, hierarchy):
             ccs_noise.append(cc)
             continue
 
-    img_denoise, ccs_denoise, hierarchy_denoise = filter_then_get_ccs_and_hierarchy(
-        img, ccs_noise)
+    img_denoise, ccs_denoise = filter_noise(img, ccs_noise)
 
-    ccs_non_text = find_non_text_ccs(ccs_denoise, hierarchy_denoise)
-
-    img_text, ccs_text, hierarchy_text = filter_then_get_ccs_and_hierarchy(
-        img_denoise, ccs_non_text)
+    img_text, ccs_text, ccs_non_text = find_non_text(img, ccs_denoise)
 
     return ccs_text, ccs_non_text
 
 
-def find_non_text_ccs(ccs, hierarchy):
-    ccs_non_text = []
-    for i, cc in enumerate(ccs):
-        if has_descendants_more_than(ccs, hierarchy, i, T_INSIDE):
-            ccs_non_text.append(cc)
-
-    return ccs_non_text
-
-
-def has_descendants_more_than(ccs, hierarchy, current, t_inside):
-    # hierarchy[0][i] => [Next, Previous, First_Child, Parent] of element i
-    if hierarchy[0][current][3] != -1:
-        return False
-
-    num_descendants = get_num_descendants(hierarchy, hierarchy[0][current][2])
-    return num_descendants > t_inside
-
-
-def get_num_descendants(hierarchy, current, dir=0):
-    if current == -1:
-        return 0
-
-    num_descendants = 0
-
-    if dir != -1:
-        num_descendants += get_num_descendants(hierarchy,
-                                               hierarchy[0][current][0], 1)
-
-    if dir != 1:
-        num_descendants += get_num_descendants(hierarchy,
-                                               hierarchy[0][current][1], -1)
-
-    num_descendants += get_num_descendants(hierarchy, hierarchy[0][current][2])
-
-    return num_descendants + 1
-
-
-def get_bounding_rect(cc):
-    x, y, w, h = cv.boundingRect(cc)
-    return x, y, w, h
-
-
-def draw_bounding_rect(img, x, y, w, h):
-    cv.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-
-
-def filter_then_get_ccs_and_hierarchy(img, rm_ccs):
+def filter_noise(img, rm_ccs):
     img_filtered = cv.drawContours(img, rm_ccs, -1, (255, 255, 255), -1)
     ccs, hierarchy = find_ccs(img_filtered)
-    return img_filtered, ccs, hierarchy
+    return img_filtered, ccs
+
+
+def find_non_text(img, ccs):
+    ccs_non_text = []
+    for i, cc in enumerate(ccs):
+        if has_descendants_more_than(ccs, i, T_INSIDE):
+            ccs_non_text.append(cc)
+            x, y, w, h = cv.boundingRect(cc)
+            img = cv.rectangle(img, (x, y), (x + w, y + h), (255, 255, 255), -1)
+
+    ccs_text, hierarchy = find_ccs(img)
+
+    return img, ccs_text, ccs_non_text
+
+
+def has_descendants_more_than(ccs, i, t_inside):
+    num_descendants = 0
+    x_i, y_i, w_i, h_i = cv.boundingRect(ccs[i])
+    for j, cc_j in enumerate(ccs, start=i + 1):
+        x_j, y_j, w_j, h_j = cv.boundingRect(cc_j)
+        if x_j >= x_i and y_j >= y_i and x_j + w_j <= x_i + w_i and y_j + h_j <= y_i + h_i:
+            num_descendants += 1
+            if num_descendants > t_inside:
+                return True
+
+    return False
+
+
+# def get_bounding_rect(cc):
+#     x, y, w, h = cv.boundingRect(cc)
+
+#     Rotated rect
+#     rect = cv.minAreaRect(cnt)
+#     box = cv.boxPoints(rect)
+#     box = np.int0(box)
+#     cv.drawContours(img,[box],0,(0,0,255),2)
+
+#     return x, y, w, h
 
 
 def display_img(title, img):
