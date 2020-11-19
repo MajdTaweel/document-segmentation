@@ -7,14 +7,8 @@ class Binarizer:
         self.__img = img.copy()
 
     def binarize(self):
-        self.__img_to_gray_scale()
-        return cv.bitwise_not(self.__binarize())
-
-    def __binarize(self):
-        self.__img = cv.adaptiveThreshold(
-            self.__img, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, 199, 5)
+        # self.__img = cv.adaptiveThreshold(
+        #     self.__img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 5, -2)
+        _, self.__img = cv.threshold(
+            self.__img, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)
         return self.__img
-
-    def __img_to_gray_scale(self):
-        if len(self.__img.shape) == 3:
-            self.__img = cv.cvtColor(self.__img, cv.COLOR_BGR2GRAY)

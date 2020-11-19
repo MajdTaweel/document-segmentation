@@ -3,14 +3,16 @@ import cv2 as cv
 
 T_AREA = 6
 T_INSIDE = 4
+T_DENS = 0.06
 
 
 class HeuristicFilter:
-    def __init__(self, img, t_area=T_AREA, t_inside=T_INSIDE):
+    def __init__(self, img, t_area=T_AREA, t_inside=T_INSIDE, t_dens=T_DENS):
         super().__init__()
         self.__img = img.copy()
         self.__t_inside = t_inside
         self.__t_area = t_area
+        self.__t_dens = t_dens
 
     def filter(self):
         """
@@ -32,8 +34,8 @@ class HeuristicFilter:
         return ccs_text, ccs_non_text
 
     def __get_ccs(self):
-        ccs, hierarchy = cv.findContours(
-            self.__img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        ccs, _ = cv.findContours(
+            self.__img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[-2:]
         return ccs
 
     def __get_ccs_noise(self):
@@ -41,9 +43,10 @@ class HeuristicFilter:
         ccs_noise = []
         for i, cc in enumerate(ccs):
             area = cv.contourArea(cc)
-            if area < self.__t_area:
+            _, _, w, h = cv.boundingRect(cc)
+            dens = area / (w * h)
+            if area < self.__t_area or dens < self.__t_dens:
                 ccs_noise.append(cc)
-                continue
 
         return ccs_noise
 
