@@ -12,9 +12,14 @@ class MultilevelClassifier:
     def __init__(self, img):
         super().__init__()
         self.__img = img.copy()
+        self.__original__img = img.copy()
 
     def get_horizontal_projection(self):
-        self.__get_homogeneous_regions()
+        self.__apply_recursive_filter()
+
+    def __apply_recursive_filter(self):
+        regions = self.__get_homogeneous_regions()
+        RecursiveFilter(self.__img, regions).filter()
 
     def __get_homogeneous_regions(self):
         h, w = self.__img.shape[:2]
@@ -50,18 +55,18 @@ class MultilevelClassifier:
 
             no_split = False
 
-        dirs.clear()
+        return regions
 
-        print(len(regions))
+        # print(len(regions))
 
-        for i in range(len(regions)):
-            x1, y1, x2, y2 = regions[i]
-            img = self.__crop_img(x1, y1, x2, y2)
-            # cv.namedWindow(f'Region{i}', cv.WINDOW_FREERATIO)
-            cv.imshow(f'Region{i}', img)
+        # for i in range(len(regions)):
+        #     x1, y1, x2, y2 = regions[i]
+        #     img = self.__crop_img(x1, y1, x2, y2)
+        #     # cv.namedWindow(f'Region{i}', cv.WINDOW_FREERATIO)
+        #     cv.imshow(f'Region{i}', img)
 
-        if cv.waitKey(0) & 0xff == 27:
-            cv.destroyAllWindows()
+        # if cv.waitKey(0) & 0xff == 27:
+        #     cv.destroyAllWindows()
 
     def __get_projection_props(self, region, vertical=False):
         x1, y1, x2, y2 = region
