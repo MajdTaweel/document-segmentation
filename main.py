@@ -25,8 +25,8 @@ def main(path):
     img_text = cv.drawContours(
         np.zeros(preprocessed.shape, dtype=np.uint8), ccs_text, -1, (255, 255, 255), -1)
 
-    cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
-    cv.imshow('Contours', con_img)
+    # cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
+    # cv.imshow('Contours', con_img)
 
     mlc = MultilevelClassifier(img_text)
     mlc.get_horizontal_projection()
