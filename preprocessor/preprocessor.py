@@ -1,5 +1,5 @@
 import cv2 as cv
-from binarizer import Binarizer
+from .binarizer import Binarizer
 
 
 KERNEL_SIZE = 5

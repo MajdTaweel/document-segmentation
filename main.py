@@ -1,9 +1,9 @@
 import sys
 import cv2 as cv
 import numpy as np
-from preprocessor import Preprocessor
-from heuristic_filter import HeuristicFilter
-from multilevel_classifier import MultilevelClassifier
+from preprocessor.preprocessor import Preprocessor
+from heuristic_filter.heuristic_filter import HeuristicFilter
+from mll_classifier.multilevel.multilevel_classifier import MultilevelClassifier
 
 
 def main(path):

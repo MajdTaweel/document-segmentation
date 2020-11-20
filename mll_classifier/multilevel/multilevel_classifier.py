@@ -1,6 +1,7 @@
 import cv2 as cv
 from matplotlib import pyplot as plt
 import numpy as np
+from .recursive_filter import RecursiveFilter
 
 
 KERNEL_SIZE = 5
