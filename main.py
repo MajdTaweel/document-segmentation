@@ -9,13 +9,9 @@ from multilevel_classifier import MultilevelClassifier
 def main(path):
     src = cv.imread(path, cv.IMREAD_UNCHANGED)
 
-    preprocessor = Preprocessor(src)
+    preprocessed = Preprocessor(src).preprocess()
 
-    preprocessed = preprocessor.preprocess()
-
-    h_filter = HeuristicFilter(preprocessed)
-
-    ccs_text, ccs_non_text = h_filter.filter()
+    ccs_text, ccs_non_text = HeuristicFilter(preprocessed).filter()
 
     # con_img = cv.drawContours(src, ccs_text, -1, (0, 255, 0), 2)
 
@@ -28,8 +24,7 @@ def main(path):
     # cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
     # cv.imshow('Contours', con_img)
 
-    mlc = MultilevelClassifier(img_text)
-    mlc.get_horizontal_projection()
+    MultilevelClassifier(img_text).get_horizontal_projection()
 
     # if cv.waitKey(0) & 0xff == 27:
     #     cv.destroyAllWindows()

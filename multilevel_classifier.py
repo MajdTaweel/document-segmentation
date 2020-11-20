@@ -18,40 +18,57 @@ class MultilevelClassifier:
     def __get_homogeneous_regions(self):
         h, w = self.__img.shape[:2]
         regions = [(0, 0, w, h)]
+        dirs = [True]
 
         i = 0
+        no_split = False
         while i < len(regions):
             split = False
             split_regions = []
-            props = self.__get_projection_props(regions[i], True)
+            props = self.__get_projection_props(regions[i], dirs[i])
             if props['var_b'] == T_VAR or props['var_w'] > T_VAR:
                 split, split_regions = self.__split_region(
-                    regions[i], props, True)
-            else:
-                props = self.__get_projection_props(regions[i])
-                if props['var_b'] == T_VAR or props['var_w'] > T_VAR:
-                    split, split_regions = self.__split_region(
-                        regions[i], props)
+                    regions[i], props, dirs[i])
+                if not split and not no_split:
+                    dirs[i] = not dirs[i]
+                    no_split = True
+                    continue
+            elif not no_split:
+                dirs[i] = not dirs[i]
+                no_split = True
+                continue
 
             if split:
                 for j, split_region in enumerate(split_regions):
                     regions.insert(i + j + 1, split_region)
+                    dirs.insert(i + j + 1, not dirs[i])
                 regions.pop(i)
+                dirs.pop(i)
             else:
                 i += 1
 
-        # for i in range(len(regions)):
-        #     x1, y1, x2, y2 = regions[i]
-        #     img = self.__crop_img(x1, y1, x2, y2)
-        #     cv.namedWindow(f'Region{i}', cv.WINDOW_FREERATIO)
-        #     cv.imshow(f'Region{i}', img)
+            no_split = False
+
+        dirs.clear()
+
+        print(len(regions))
+
+        for i in range(len(regions)):
+            x1, y1, x2, y2 = regions[i]
+            img = self.__crop_img(x1, y1, x2, y2)
+            # cv.namedWindow(f'Region{i}', cv.WINDOW_FREERATIO)
+            cv.imshow(f'Region{i}', img)
 
         if cv.waitKey(0) & 0xff == 27:
             cv.destroyAllWindows()
 
     def __get_projection_props(self, region, vertical=False):
         x1, y1, x2, y2 = region
-        img = self.__crop_img(x1, y1, x2, y2)
+        img = self.__img
+        h, w = self.__img.shape[:2]
+        if region[0] != 0 or region[1] != 0 or region[2] != w or region[3] != h:
+            img = self.__crop_img(x1, y1, x2, y2)
+
         p = self.__get_projection(img, vertical)
         z = self.__get_bi_level_projection(p, vertical).flatten()
 
@@ -60,11 +77,14 @@ class MultilevelClassifier:
             offset = x1
         uppers, lowers, black_lines, white_lines = self.__get_lines(
             img, z, offset, vertical)
-        lines = []
-        lines.extend(black_lines)
-        lines.extend(white_lines)
-        var_b = np.var(black_lines)
-        var_w = np.var(white_lines)
+
+        var_b = 0
+        if len(black_lines):
+            var_b = np.var(black_lines)
+
+        var_w = 0
+        if len(white_lines):
+            var_w = np.var(white_lines)
 
         props = {
             'z': z,
