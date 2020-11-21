@@ -31,7 +31,7 @@ class HeuristicFilter:
 
         ccs_text, ccs_non_text = self.__filter_non_text(ccs_denoise)
 
-        return ccs_text, ccs_non_text
+        return ccs_text, ccs_non_text, self.__img
 
     def __get_ccs(self):
         ccs, _ = cv.findContours(

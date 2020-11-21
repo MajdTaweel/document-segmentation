@@ -12,19 +12,25 @@ class MultilevelClassifier:
     def __init__(self, img):
         super().__init__()
         self.__img = img.copy()
-        self.__original__img = img.copy()
+        h, w = self.__img.shape[:2]
+        self.__regions = [(0, 0, w, h)]
 
-    def get_horizontal_projection(self):
-        self.__apply_recursive_filter()
+    def classify_non_text_ccs(self):
+        return self.__apply_recursive_filter(), self.__img
 
     def __apply_recursive_filter(self):
-        regions = self.__get_homogeneous_regions()
-        RecursiveFilter(self.__img, regions).filter()
+        modified = True
+        non_text = []
+        while modified:
+            regions = self.__get_homogeneous_regions(self.__regions)
+            modified, self.__img, non_text2 = RecursiveFilter(
+                self.__img, regions).filter()
+            non_text.extend(non_text2)
 
-    def __get_homogeneous_regions(self):
-        h, w = self.__img.shape[:2]
-        regions = [(0, 0, w, h)]
-        dirs = [True]
+        return non_text
+
+    def __get_homogeneous_regions(self, regions):
+        dirs = [True for region in regions]
 
         i = 0
         no_split = False
@@ -102,16 +108,16 @@ class MultilevelClassifier:
             'var_w': var_w
         }
 
-        if var_b > T_VAR:
-            if vertical:
-                print(f'Black variance (Vertical): {var_b}')
-            else:
-                print(f'Black variance (Horizontal): {var_b}')
-        elif var_w > T_VAR:
-            if vertical:
-                print(f'White variance (Vertical): {var_w}')
-            else:
-                print(f'White variance (Horizontal): {var_w}')
+        # if var_b > T_VAR:
+        #     if vertical:
+        #         print(f'Black variance (Vertical): {var_b}')
+        #     else:
+        #         print(f'Black variance (Horizontal): {var_b}')
+        # elif var_w > T_VAR:
+        #     if vertical:
+        #         print(f'White variance (Vertical): {var_w}')
+        #     else:
+        #         print(f'White variance (Horizontal): {var_w}')
 
         return props
 

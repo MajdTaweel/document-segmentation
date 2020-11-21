@@ -11,20 +11,28 @@ def main(path):
 
     preprocessed = Preprocessor(src).preprocess()
 
-    ccs_text, ccs_non_text = HeuristicFilter(preprocessed).filter()
+    ccs_text, ccs_non_text, img_text = HeuristicFilter(preprocessed).filter()
 
     # con_img = cv.drawContours(src, ccs_text, -1, (0, 255, 0), 2)
 
-    con_img = cv.drawContours(src, ccs_non_text, -1, (0, 0, 255), 2)
+    # con_img = cv.drawContours(src, ccs_non_text, -1, (0, 0, 255), 2)
 
     # img_text = cv.drawContours(preprocessed, ccs_non_text, -1, (0, 0, 0), -1)
-    img_text = cv.drawContours(
-        np.zeros(preprocessed.shape, dtype=np.uint8), ccs_text, -1, (255, 255, 255), -1)
+    # img_text = cv.drawContours(
+    #     np.zeros(preprocessed.shape, dtype=np.uint8), ccs_text, -1, (255, 255, 255), -1)
 
     # cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
     # cv.imshow('Contours', con_img)
 
-    MultilevelClassifier(img_text).get_horizontal_projection()
+    ccs_non_text2, img_text = MultilevelClassifier(
+        img_text).classify_non_text_ccs()
+
+    ccs_non_text.extend(ccs_non_text2)
+
+    cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
+    cv.imshow('Contours', img_text)
+    if cv.waitKey(0) & 0xff == 27:
+        cv.destroyAllWindows()
 
     # if cv.waitKey(0) & 0xff == 27:
     #     cv.destroyAllWindows()

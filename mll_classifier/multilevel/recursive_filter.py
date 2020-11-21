@@ -9,13 +9,28 @@ class RecursiveFilter():
         self.__regions = regions.copy()
 
     def filter(self):
+        modified = False
+        non_text = []
         for region in self.__regions:
-            self.__filter_region(region)
+            current_modified, non_text_i = self.__filter_region(region)
+            modified = modified or current_modified
+            non_text.extend(non_text_i)
+
+        return modified, self.__img, non_text
 
     def __filter_region(self, region):
         features = self.__extract_features(region)
-        self.__apply_max_median_filter(region, features)
-        self.__apply_min_median_filter(region, features)
+
+        non_text_max = self.__apply_max_median_filter(region, features)
+        non_text_min = self.__apply_min_median_filter(region, features)
+
+        non_text = []
+        non_text.extend(non_text_max)
+        non_text.extend(non_text_min)
+
+        cv.drawContours(self.__img, non_text, -1, (0, 0, 0), -1)
+
+        return len(non_text) > 0, non_text
 
     def __extract_features(self, region):
         ccs = self.__get_ccs(region)
@@ -53,6 +68,7 @@ class RecursiveFilter():
                 for x2 in xs:
                     if x2 < lnn_i:
                         num_ln += 1
+            n_ln.append(num_ln)
 
             num_rn = 0
             if rnn_i != x + widths[i]:
@@ -60,6 +76,7 @@ class RecursiveFilter():
                 for x2 in xs:
                     if x2 > rnn_i:
                         num_rn += 1
+            n_rn.append(num_rn)
 
         ws = []
         ws.extend(lnws)
@@ -80,9 +97,11 @@ class RecursiveFilter():
             'median_area': np.median(areas),
             'mean_area': np.average(areas),
             'max_h': np.max(heights),
+            'min_h': np.min(heights),
             'median_h': np.median(heights),
             'mean_h': np.average(heights),
             'max_w': np.max(widths),
+            'min_w': np.min(widths),
             'median_w': np.median(widths),
             'mean_w': np.average(widths),
             'max_ws': np.max(ws),
@@ -93,7 +112,7 @@ class RecursiveFilter():
         k = {}
         for feature in 'area', 'h', 'w':
             r = features[f'mean_{feature}'] / features[f'median_{feature}']
-            k[feature] = np.max(r, 1 / r)
+            k[feature] = np.max([r, 1 / r])
 
         features['k'] = k
 
@@ -112,9 +131,7 @@ class RecursiveFilter():
                              and features['widths'][i] > k['w'] * features['median_w'])):
                 non_text_sus.append(i)
 
-        non_text = self.__classify_non_text(features, non_text_sus)
-
-        return non_text
+        return self.__classify_non_text(features, non_text_sus)
 
     def __apply_min_median_filter(self, region, features):
         k = features['k']
@@ -127,19 +144,16 @@ class RecursiveFilter():
                     and features['widths'][i] < features['median_w'] / k['w']):
                 non_text_sus.append(i)
 
-        non_text = self.__classify_non_text(features, non_text_sus, True)
+        return self.__classify_non_text(features, non_text_sus)
 
-        return non_text
-
-    def __classify_non_text(self, features, non_text_sus, min=False):
+    def __classify_non_text(self, features, non_text_sus):
         non_text = []
         for i in non_text_sus:
-            is_non_text = (np.min(features['lnws'][i], features['rnws'][i]) > np.max(features['median_ws'], features['mean_ws'])
-                           and (np.max(features['lnws'][i], features['rnws'][i]) == features['max_ws']
-                                or np.min(features['lnws'][i], features['rnws'][i]) > 2 * features['mean_ws'])) \
+            if (np.min([features['lnws'][i], features['rnws'][i]]) > np.max([features['median_ws'], features['mean_ws']])
+                and (np.max([features['lnws'][i], features['rnws'][i]]) == features['max_ws']
+                     or np.min([features['lnws'][i], features['rnws'][i]]) > 2 * features['mean_ws'])) \
                 or ((features['n_ln'][i] == np.max(features['n_ln']) and features['n_ln'][i] > 2)
-                    or (features['n_rn'][i] == np.max(features['n_rn']) and features['n_rn'][i] > 2))
-            if (is_non_text and not min) or (not is_non_text and min):
+                    or (features['n_rn'][i] == np.max(features['n_rn']) and features['n_rn'][i] > 2)):
                 non_text.append(features['ccs'][i])
 
         return non_text
