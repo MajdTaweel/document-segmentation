@@ -8,7 +8,7 @@ KERNEL_SIZE = 5
 T_VAR = 1.3
 
 
-class MultilevelClassifier:
+class MllClassifier:
     def __init__(self, img):
         super().__init__()
         self.__img = img.copy()
@@ -22,9 +22,9 @@ class MultilevelClassifier:
         modified = True
         non_text = []
         while modified:
-            regions = self.__get_homogeneous_regions(self.__regions)
+            self.__regions = self.__get_homogeneous_regions(self.__regions)
             modified, self.__img, non_text2 = RecursiveFilter(
-                self.__img, regions).filter()
+                self.__img, self.__regions).filter()
             non_text.extend(non_text2)
 
         return non_text

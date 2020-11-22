@@ -31,6 +31,8 @@ class HeuristicFilter:
 
         ccs_text, ccs_non_text = self.__filter_non_text(ccs_denoise)
 
+        ccs_non_text.extend(ccs_noise)
+
         return ccs_text, ccs_non_text, self.__img
 
     def __get_ccs(self):

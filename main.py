@@ -3,13 +3,18 @@ import cv2 as cv
 import numpy as np
 from preprocessor.preprocessor import Preprocessor
 from heuristic_filter.heuristic_filter import HeuristicFilter
-from mll_classifier.multilevel.multilevel_classifier import MultilevelClassifier
+from mll_classifier.mll_classifier import MllClassifier
 
 
 def main(path):
     src = cv.imread(path, cv.IMREAD_UNCHANGED)
 
     preprocessed = Preprocessor(src).preprocess()
+
+    cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
+    cv.imshow('Contours', preprocessed)
+    if cv.waitKey(0) & 0xff == 27:
+        cv.destroyAllWindows()
 
     ccs_text, ccs_non_text, img_text = HeuristicFilter(preprocessed).filter()
 
@@ -24,13 +29,13 @@ def main(path):
     # cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
     # cv.imshow('Contours', con_img)
 
-    ccs_non_text2, img_text = MultilevelClassifier(
-        img_text).classify_non_text_ccs()
+    ccs_non_text2, img_text = MllClassifier(img_text).classify_non_text_ccs()
 
     ccs_non_text.extend(ccs_non_text2)
 
+    cv.drawContours(src, ccs_non_text, -1, (0, 0, 255), 2)
     cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
-    cv.imshow('Contours', img_text)
+    cv.imshow('Contours', src)
     if cv.waitKey(0) & 0xff == 27:
         cv.destroyAllWindows()
 
@@ -58,4 +63,4 @@ if __name__ == '__main__':
     #     raise Exception(f'Too many arguments: {len(args)}. Only one argument is required.')
 
     # main(args[0])
-    main('img/la.png')
+    main('img/la2.png')

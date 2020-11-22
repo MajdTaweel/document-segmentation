@@ -8,7 +8,7 @@ class Binarizer:
 
     def binarize(self):
         # self.__img = cv.adaptiveThreshold(
-        #     self.__img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 5, -2)
+        #     self.__img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 3, 2)
         _, self.__img = cv.threshold(
             self.__img, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)
         return self.__img
