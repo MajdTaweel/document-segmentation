@@ -15,6 +15,19 @@ class MllClassifier:
         h, w = self.__img.shape[:2]
         self.__regions = [(0, 0, w, h)]
 
+    def get_first_level_homogeneous_regions(self):
+        regions_and_features = []
+        regions = self.__get_homogeneous_regions(self.__regions, True)
+        recursive_filter = RecursiveFilter(self.__img, regions)
+        for region in regions:
+            features = recursive_filter.extract_features(region)
+            w = self.__get_projection_props(region)['white_lines']
+            features['region'] = region
+            features['w'] = w
+            regions_and_features.append(features)
+
+        return regions_and_features
+
     def classify_non_text_ccs(self):
         ccs_non_text = self.__apply_recursive_filter()
         ccs_text, _ = cv.findContours(
@@ -32,7 +45,7 @@ class MllClassifier:
 
         return non_text
 
-    def __get_homogeneous_regions(self, regions):
+    def __get_homogeneous_regions(self, regions, one_level=False):
         dirs = [True for region in regions]
 
         i = 0
@@ -59,6 +72,8 @@ class MllClassifier:
                     dirs.insert(i + j + 1, not dirs[i])
                 regions.pop(i)
                 dirs.pop(i)
+                if one_level:
+                    break
             else:
                 i += 1
 

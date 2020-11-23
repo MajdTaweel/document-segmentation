@@ -19,7 +19,7 @@ class RecursiveFilter():
         return modified, self.__img, non_text
 
     def __filter_region(self, region):
-        features = self.__extract_features(region)
+        features = self.extract_features(region)
 
         non_text_max = self.__apply_max_median_filter(region, features)
         non_text_min = self.__apply_min_median_filter(region, features)
@@ -32,7 +32,7 @@ class RecursiveFilter():
 
         return len(non_text) > 0, non_text
 
-    def __extract_features(self, region):
+    def extract_features(self, region):
         ccs = self.__get_ccs(region)
         areas = []
         heights = []
@@ -93,6 +93,7 @@ class RecursiveFilter():
             'rnws': rnws,
             'n_ln': n_ln,
             'n_rn': n_rn,
+            'ws': ws,
             'max_area': np.max(areas),
             'median_area': np.median(areas),
             'mean_area': np.average(areas),

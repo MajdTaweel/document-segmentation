@@ -5,6 +5,7 @@ from preprocessor.preprocessor import Preprocessor
 from heuristic_filter.heuristic_filter import HeuristicFilter
 from mll_classifier.mll_classifier import MllClassifier
 from postprocessor.postprocessor import Postprocessor
+from text_segmenter.text_segmenter import TextSegmenter
 
 
 def main(path):
@@ -13,6 +14,11 @@ def main(path):
     preprocessed = Preprocessor(src).preprocess()
 
     ccs_text, ccs_non_text, img_text = HeuristicFilter(preprocessed).filter()
+
+    # cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
+    # cv.imshow('Contours', preprocessed)
+    # if cv.waitKey(0) & 0xff == 27:
+    #     cv.destroyAllWindows()
 
     # con_img = cv.drawContours(src, ccs_text, -1, (0, 255, 0), 2)
 
@@ -33,6 +39,10 @@ def main(path):
     ccs_text, ccs_non_text, img_text = Postprocessor(
         preprocessed, ccs_text, ccs_non_text).postprocess()
 
+    ccs_text = TextSegmenter(preprocessed, ccs_text,
+                             ccs_non_text).segment_text()
+
+    cv.drawContours(src, ccs_text, -1, (0, 255, 0), 2)
     cv.drawContours(src, ccs_non_text, -1, (0, 0, 255), 2)
     cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
     cv.imshow('Contours', src)
