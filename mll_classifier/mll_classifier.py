@@ -16,7 +16,10 @@ class MllClassifier:
         self.__regions = [(0, 0, w, h)]
 
     def classify_non_text_ccs(self):
-        return self.__apply_recursive_filter(), self.__img
+        ccs_non_text = self.__apply_recursive_filter()
+        ccs_text, _ = cv.findContours(
+            self.__img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[-2:]
+        return ccs_text, ccs_non_text, self.__img
 
     def __apply_recursive_filter(self):
         modified = True
