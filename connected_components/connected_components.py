@@ -110,5 +110,5 @@ class ConnectedComponent:
 
 def get_connected_components(img, offset=None) -> List[ConnectedComponent]:
     contours, _ = cv.findContours(
-        img, cv.RETR_TREE, cv.CHAIN_APPROX_NONE, offset=offset)[-2:]
+        img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE, offset=offset)[-2:]
     return [ConnectedComponent(contour) for contour in contours]

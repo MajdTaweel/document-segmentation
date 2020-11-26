@@ -25,8 +25,7 @@ def main(path):
     # ccs_text, ccs_non_text, img_text = Postprocessor(
     #     preprocessed, ccs_text, ccs_non_text).postprocess()
 
-    # ccs_text = TextSegmenter(preprocessed, ccs_text,
-    #                          ccs_non_text).segment_text()
+    ccs_text = TextSegmenter(img_text, ccs_text, ccs_non_text).segment_text()
 
     cv.drawContours(src, [cc.get_contour()
                           for cc in ccs_text], -1, (0, 255, 0), 2)

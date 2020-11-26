@@ -377,3 +377,6 @@ class Region:
     def set_img(self, img):
         self.__init__(self.__rect, img)
         return self
+
+    def get_img(self):
+        return self.__img

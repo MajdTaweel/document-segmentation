@@ -20,19 +20,6 @@ class MllClassifier:
             )
         ]
 
-    # def get_first_level_homogeneous_regions(self):
-    #     regions_and_features = []
-    #     regions = self.__get_homogeneous_regions(self.__regions, True)
-    #     recursive_filter = RecursiveFilter(self.__img, regions)
-    #     for region in regions:
-    #         features = recursive_filter.extract_features(region)
-    #         w = self.__get_projection_props(region)['white_lines']
-    #         features['region'] = region
-    #         features['w'] = w
-    #         regions_and_features.append(features)
-
-    #     return regions_and_features
-
     def classify_non_text_ccs(self):
         ccs_non_text = self.__apply_recursive_filter()
         ccs_text = get_connected_components(self.__img)
