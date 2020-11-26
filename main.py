@@ -22,8 +22,8 @@ def main(path):
 
     ccs_non_text.extend(ccs_non_text2)
 
-    # ccs_text, ccs_non_text, img_text = Postprocessor(
-    #     preprocessed, ccs_text, ccs_non_text).postprocess()
+    ccs_text, ccs_non_text, img_text = Postprocessor(
+        preprocessed, ccs_text, ccs_non_text).postprocess()
 
     ccs_text = TextSegmenter(img_text, ccs_text, ccs_non_text).segment_text()
 
