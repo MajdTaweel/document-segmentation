@@ -9,6 +9,9 @@ class Binarizer:
     def binarize(self):
         # self.__img = cv.adaptiveThreshold(
         #     self.__img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 3, 2)
-        _, self.__img = cv.threshold(
+        ret, self.__img = cv.threshold(
             self.__img, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)
+        
+        if ret < 100:
+            self.__img = cv.bitwise_not(self.__img)
         return self.__img

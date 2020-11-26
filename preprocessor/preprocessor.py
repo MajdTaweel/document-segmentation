@@ -1,6 +1,7 @@
 import cv2 as cv
-from .binarizer import Binarizer
+import numpy as np
 
+from .binarizer import Binarizer
 
 KERNEL_SIZE = 5
 
@@ -13,7 +14,7 @@ class Preprocessor:
     def preprocess(self):
         self.__img_to_gray_scale()
         # self.__enhance_img()
-        # self.__smooth_img()
+        self.__smooth_img()
         binarizer = Binarizer(self.__img)
         self.__img = binarizer.binarize()
         self.__correct_skew()
@@ -28,7 +29,10 @@ class Preprocessor:
 
     def __smooth_img(self):
         # self.__img = cv.GaussianBlur(self.__img, (KERNEL_SIZE, KERNEL_SIZE), 0)
-        self.__img = cv.medianBlur(self.__img, KERNEL_SIZE)
+        # self.__img = cv.medianBlur(self.__img, KERNEL_SIZE)
+        kernel = np.ones((KERNEL_SIZE, KERNEL_SIZE), np.float32)
+        kernel /= (KERNEL_SIZE ** 2)
+        self.__img = cv.filter2D(self.__img, -1, kernel)
 
     def __correct_skew(self):
         pts = cv.findNonZero(self.__img)

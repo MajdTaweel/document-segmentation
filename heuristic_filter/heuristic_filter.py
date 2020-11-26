@@ -1,5 +1,5 @@
 import cv2 as cv
-
+from connected_components.connected_components import get_connected_components
 
 T_AREA = 6
 T_INSIDE = 4
@@ -36,48 +36,41 @@ class HeuristicFilter:
         return ccs_text, ccs_non_text, self.__img
 
     def __get_ccs(self):
-        ccs, _ = cv.findContours(
-            self.__img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[-2:]
-        return ccs
+        return get_connected_components(self.__img)
 
     def __get_ccs_noise(self):
         ccs = self.__get_ccs()
         ccs_noise = []
-        for i, cc in enumerate(ccs):
-            area = cv.contourArea(cc)
-            _, _, w, h = cv.boundingRect(cc)
-            dens = area / (w * h)
-            if area < self.__t_area or dens < self.__t_dens:
+        for cc in ccs:
+            if cc.get_area() < self.__t_area or cc.get_dens() < self.__t_dens:
                 ccs_noise.append(cc)
 
         return ccs_noise
 
     def __filter_noise(self, ccs_noise):
-        cv.drawContours(self.__img, ccs_noise, -1, (0, 0, 0), -1)
+        contours = [cc.get_contour() for cc in ccs_noise]
+        cv.drawContours(self.__img, contours, -1, (0, 0, 0), -1)
         ccs = self.__get_ccs()
         return ccs
 
     def __filter_non_text(self, ccs):
         ccs_non_text = []
         for i, cc in enumerate(ccs):
-            if self.__has_descendants_more_than_t_inside(ccs, i):
+            if self.__has_descendants_more_than_t_inside(cc, ccs):
                 ccs_non_text.append(cc)
-                # x, y, w, h = cv.boundingRect(cc)
-                # cv.rectangle(self.__img, (x, y), (x + w, y + h), (0, 0, 0), -1)
-                cv.drawContours(self.__img, [cc], -1, (0, 0, 0), -1)
+                cv.drawContours(
+                    self.__img, [cc.get_contour()], -1, (0, 0, 0), -1)
 
         ccs_text = self.__get_ccs()
 
         return ccs_text, ccs_non_text
 
-    def __has_descendants_more_than_t_inside(self, ccs, i):
+    def __has_descendants_more_than_t_inside(self, cc, ccs):
         num_descendants = 0
-        x_i, y_i, w_i, h_i = cv.boundingRect(ccs[i])
-        for j, cc_j in enumerate(ccs, start=i + 1):
-            x_j, y_j, w_j, h_j = cv.boundingRect(cc_j)
-            if x_j >= x_i and y_j >= y_i and x_j + w_j <= x_i + w_i and y_j + h_j <= y_i + h_i:
+        for cc_j in ccs:
+            if cc.contains(cc_j):
                 num_descendants += 1
-                if num_descendants > self.__t_inside:
+                if num_descendants > self.__t_inside + 1:
                     return True
 
         return False
