@@ -3,20 +3,24 @@ import numpy as np
 
 
 class RecursiveFilter():
-    def __init__(self, img, regions):
+    def __init__(self, img, region):
         super().__init__()
         self.__img = img.copy()
-        self.__regions = regions.copy()
+        # self.__regions = regions.copy()
+        self.__region = region
+
+    # def filter(self):
+    #     modified = False
+    #     non_text = []
+    #     for region in self.__regions:
+    #         current_modified, non_text_i = self.__filter_region(region)
+    #         modified = modified or current_modified
+    #         non_text.extend(non_text_i)
+
+    #     return modified, self.__img, non_text
 
     def filter(self):
-        modified = False
-        non_text = []
-        for region in self.__regions:
-            current_modified, non_text_i = self.__filter_region(region)
-            modified = modified or current_modified
-            non_text.extend(non_text_i)
-
-        return modified, self.__img, non_text
+        return self.__filter_region(self.__region)
 
     def __filter_region(self, region):
         region.set_features()
@@ -31,7 +35,9 @@ class RecursiveFilter():
         cv.drawContours(self.__img, [cc.get_contour()
                                      for cc in non_text], -1, (0, 0, 0), -1)
 
-        return len(non_text) > 0, non_text
+        region.set_img(self.__img)
+
+        return len(non_text) > 0, self.__img, non_text
 
     def __apply_max_median_filter(self, region):
         features = region.get_features()

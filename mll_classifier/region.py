@@ -8,40 +8,31 @@ T_VAR = 1.3
 class Region:
     def __init__(self, rect, img, t_var=T_VAR):
         super().__init__()
+        # if not np.any(img):
+        #     self = None
+        #     return
         self.__rect = rect
-        self.__root_img = img
-        self.__img = self.__crop_image(img)
+        self.__root_img = img.copy()
+        self.__img = self.__crop_image(img.copy())
         self.__t_var = t_var
         self.__set_all_attrs()
         self.__ccs = get_connected_components(self.__img, (rect[0], rect[1]))
 
     def get_next_level_homogeneous_regions(self):
-        i = 0
-        regions = [self]
+        region = self
         vertical = self.__var_vw > self.__var_hw
-        no_split = False
-        while i < len(regions):
+
+        for i in range(2):
             split = False
-            split_regions = []
-            if self.get_var_b(vertical) == self.__t_var or self.get_var_w(vertical) > self.__t_var:
-                split, split_regions = self.__split_region(
-                    regions[i], vertical)
+            if self.get_var_b(vertical) > self.__t_var or self.get_var_w(vertical) > self.__t_var:
+                split, split_regions = self.__split_region(region, vertical)
 
             if split:
-                for j, split_region in enumerate(split_regions):
-                    regions.insert(i + j + 1, split_region)
-                regions.pop(i)
-                i += len(split_regions) - 1
-            elif not no_split and len(split_regions) < 2:
+                return True, split_regions
+            elif not split:
                 vertical = not vertical
-                no_split = True
-                continue
-            else:
-                i += 1
 
-            no_split = False
-
-        return len(regions) > 1, regions
+        return False, [region]
 
     def __split_region(self, region, vertical=False):
         bl = region.get_bl(vertical)
@@ -57,17 +48,29 @@ class Region:
             len_bl = [rect[3] for rect in bl]
             len_wl = [rect[3] for rect in wl]
 
-        is_split = False
-        region_splits = []
+        splits = []
 
-        if region.get_var_b(vertical) > region.get_var_w(vertical):
-            is_split, region_splits = self.__split_bl(
-                region, len_bl, wl, vertical)
-        elif len(wl) > 0:
-            is_split, region_splits = self.__split_wl(
-                region, len_wl, wl, vertical)
+        if len(wl) > 0 and region.get_var_w(vertical) > self.__t_var:
+            _, black_splits = self.__split_wl(region, len_wl, wl, vertical)
+            splits.extend(black_splits)
 
-        return is_split, [Region(region_split, self.__root_img) for region_split in region_splits]
+        if region.get_var_b(vertical) > self.__t_var:
+            _, white_splits = self.__split_bl(region, len_bl, wl, vertical)
+            splits.extend(white_splits)
+
+        if len(splits) == 0:
+            return False, []
+
+        regions_rects = self.__get_split_regions_rects(
+            region, splits, vertical)
+
+        regions = [Region(region_rect, self.__root_img)
+                   for region_rect in regions_rects]
+
+        regions = [region for region in regions if np.max(
+            region.get_img().flatten(), initial=0) > 0]
+
+        return True, regions
 
     def __split_bl(self, region, len_bl, wl, vertical):
         median_b = np.median(len_bl)
@@ -82,20 +85,19 @@ class Region:
         return False, []
 
     def __split_bl_once(self, region, wl, i, vertical):
-        split_type = 'upper'
+        upper = True
         if i == 0:
-            split_type = 'lower'
+            upper = False
 
-        split_regions_rects = self.__get_split_regions_rects(
-            region, wl, i, split_type, vertical)
+        split = self.__get_split(wl, i, upper, vertical)
 
-        return True, split_regions_rects
+        return True, [split]
 
     def __split_bl_twice(self, region, wl, i, vertical):
-        split_regions_rects = self.__get_split_regions_rects(
-            region, wl, i, 'both', vertical)
+        upper_split = self.__get_split(wl, i, True, vertical)
+        lower_split = self.__get_split(wl, i, False, vertical)
 
-        return True, split_regions_rects
+        return True, [upper_split, lower_split]
 
     def __split_wl(self, region, len_wl, wl, vertical):
         median_w = np.median(len_wl)
@@ -103,59 +105,67 @@ class Region:
 
         for i in range(len(wl)):
             if len_wl[i] == max_w and len_wl[i] > median_w:
-                split_regions_rects = self.__get_split_regions_rects(
-                    region, wl, i, 'lower', vertical)
+                split = self.__get_split(wl, i, False, vertical)
 
-                return True, split_regions_rects
+                return True, [split]
 
         return False, []
 
-    def __get_split_regions_rects(self, region, wl, i, split_type, vertical=False):
-        x, y, w, h = region.get_rect()
+    def __get_split_regions_rects(self, region, splits, vertical):
+        splits.sort()
 
-        splits = {}
-        if split_type == 'upper' or split_type == 'both':
-            splits['upper'] = self.__get_split(wl, i, True, vertical)
-        if split_type == 'lower' or split_type == 'both':
-            splits['lower'] = self.__get_split(wl, i, False, vertical)
-
-        if split_type == 'both':
-            if vertical:
-                return [
-                    (x, y, splits['upper'] - x, h),
-                    (splits['upper'], y, splits['lower'] - splits['upper'], h),
-                    (splits['lower'], y, w + x - splits['lower'], h)
-                ]
-            else:
-                return [
-                    (x, y, w, splits['upper'] - y),
-                    (x, splits['upper'], w, splits['lower'] - splits['upper']),
-                    (x, splits['lower'], w, h + y - splits['lower'])
-                ]
+        if vertical:
+            return self.__get_vertical_split_regions_rects(region, splits)
         else:
-            if vertical:
-                return [(x, y, splits[split_type] - x, h), (splits[split_type], y, w + x - splits[split_type], h)]
-            else:
-                return [(x, y, w, splits[split_type] - y), (x, splits[split_type], w, h + y - splits[split_type])]
+            return self.__get_horizontal_split_regions_rects(region, splits)
+
+    def __get_horizontal_split_regions_rects(self, region, splits):
+        x, y, w, h = region.get_rect()
+        rects = []
+        for i, split in enumerate(splits):
+            if i == 0:
+                rects.append((x, y, w, split - y))
+            elif i <= len(splits) - 1:
+                rects.append((x, splits[i - 1], w, split - splits[i - 1]))
+            if i == len(splits) - 1:
+                rects.append((x, split, w, h + y - split))
+
+        return rects
+
+    def __get_vertical_split_regions_rects(self, region, splits):
+        x, y, w, h = region.get_rect()
+        rects = []
+        for i, split in enumerate(splits):
+            if i == 0:
+                rects.append((x, y, split - x, h))
+            elif i <= len(splits) - 1:
+                rects.append((splits[i - 1], y, split - splits[i - 1], h))
+            if i == len(splits) - 1:
+                rects.append((split, y, w + x - split, h))
+
+        return rects
 
     def __get_split(self, wl, i, upper, vertical):
         start = i
         if upper:
             start -= 1
 
+        x, y, w, h = wl[start]
+
         if vertical:
-            return wl[start][0] + int(wl[start][2] / 2)
+            return x + int(w / 2)
         else:
-            return wl[start][1] + int(wl[start][3] / 2)
+            return y + int(h / 2)
 
     def __crop_image(self, img):
-        h, w = img.shape[:2]
-        if self.__rect[0] == 0 and self.__rect[1] == 0 and self.__rect[2] == w and self.__rect[3] == h:
-            return img.copy()
+        h_img, w_img = img.shape[:2]
+        x, y, w, h = self.__rect
+        if x == 0 and y == 0 and w == w_img and h == h_img:
+            return img
         else:
             return img[
-                self.__rect[1]:self.__rect[1] + self.__rect[3],
-                self.__rect[0]:self.__rect[0] + self.__rect[2]
+                y:(y + h),
+                x:(x + w)
             ]
 
     def __set_all_attrs(self):
@@ -165,34 +175,24 @@ class Region:
         self.__set_variances()
 
     def __set_projections(self):
-        self.__p_h = cv.reduce(
-            self.__img, 1, cv.REDUCE_SUM, dtype=cv.CV_32S) / 255
-        self.__p_v = cv.reduce(
-            self.__img, 0, cv.REDUCE_SUM, dtype=cv.CV_32S) / 255
+        self.__p_h = np.sum(self.__img, 1, np.uint8) / 255
+        self.__p_v = np.sum(self.__img, 0, np.uint8) / 255
         self.__z_h = self.__get_bi_level_projection__(self.__p_h)
-        self.__z_v = self.__get_bi_level_projection__(self.__p_v, True)
+        self.__z_v = self.__get_bi_level_projection__(self.__p_v)
 
-    def __get_bi_level_projection__(self, p, vertical=False):
+    def __get_bi_level_projection__(self, p):
         p = p.copy()
-        if vertical:
-            for i in range(len(p[0])):
-                if p[0][i] > 0:
-                    p[0][i] = 1
-                else:
-                    p[0][i] = 0
-        else:
-            for i in range(len(p)):
-                if p[i][0] > 0:
-                    p[i][0] = 1
-                else:
-                    p[i][0] = 0
-        return p.flatten()
+        for i in range(len(p)):
+            if p[i] > 0:
+                p[i] = 1
+            else:
+                p[i] = 0
+        return p
 
     def __get_lines(self, vertical=False):
+        x, y, w, h = self.__rect
         p = self.__z_h
-        length = self.__rect[3]
         if vertical:
-            length = self.__rect[2]
             p = self.__z_v
 
         uppers, lowers = self.__get_bounds__(p, vertical)
@@ -201,32 +201,43 @@ class Region:
 
         for i in range(len(uppers)):
             if vertical:
-                bl.append((uppers[i], 0, lowers[i] - uppers[i], length))
+                bl.append((uppers[i], y, lowers[i] - uppers[i], h))
             else:
-                bl.append((0, uppers[i], length, lowers[i] - uppers[i]))
+                bl.append((x, uppers[i], w, lowers[i] - uppers[i]))
             if i + 1 < len(uppers):
                 if vertical:
                     wl.append(
-                        (uppers[i], 0, uppers[i + 1] - lowers[i], length))
+                        (uppers[i], y, uppers[i + 1] - lowers[i], h))
                 else:
                     wl.append(
-                        (0, uppers[i], length, uppers[i + 1] - lowers[i]))
+                        (x, uppers[i], w, uppers[i + 1] - lowers[i]))
 
         return bl, wl
 
     def __get_bounds__(self, p, vertical=False):
         th = 0
 
-        length = self.__rect[3]
-        offset = self.__rect[1]
-        if vertical:
-            length = self.__rect[2]
-            offset = self.__rect[0]
+        x, y, w, h = self.__rect
 
-        uppers = [i + offset for i in range(length) if (i == 0 and p[i] > th)
-                  or (i != 0 and p[i] > th and p[i - 1] <= th)]
-        lowers = [i + offset for i in range(length) if (i == length - 1 and p[i] > th) or (
-            i != length - 1 and p[i] > th and p[i + 1] <= th)]
+        length = h
+        offset = y
+        if vertical:
+            length = w
+            offset = x
+
+        uppers = []
+        lowers = []
+
+        for i in range(length):
+            if (i == 0 and p[i] > th) or (i != 0 and p[i] > th and p[i - 1] <= th):
+                uppers.append(i + offset)
+            if (i == length - 1 and p[i] > th) or (i != length - 1 and p[i] > th and p[i + 1] <= th):
+                lowers.append(i + offset)
+
+        # uppers = [i + offset for i in range(length) if (i == 0 and p[i] > th)
+        #           or (i != 0 and p[i] > th and p[i - 1] <= th)]
+        # lowers = [i + offset for i in range(length) if (i == length - 1 and p[i] > th) or (
+        #     i != length - 1 and p[i] > th and p[i + 1] <= th)]
 
         return uppers, lowers
 
@@ -301,7 +312,7 @@ class Region:
         return self.__ccs
 
     def set_features(self):
-        ccs = self.get_ccs()
+        ccs = self.__ccs
 
         areas = []
         heights = []
@@ -310,7 +321,8 @@ class Region:
             if cc.get_area() > 0:
                 areas.append(cc.get_area())
             else:
-                areas.append(cc.get_rect_area())
+                absolute_area = np.sum(cc.get_contour().flatten()) / 255
+                areas.append(absolute_area)
             heights.append(cc.get_rect()[3])
             widths.append(cc.get_rect()[2])
 
@@ -380,3 +392,12 @@ class Region:
 
     def get_img(self):
         return self.__img
+
+    def split_horizontally_at(self, splits):
+        regions_rects = self.__get_split_regions_rects(self, splits, False)
+
+        regions = [Region(region_rect, self.__root_img) for region_rect in regions_rects]
+
+        regions = [region for region in regions if np.max(region.get_img().flatten(), initial=0) > 0]
+
+        return regions

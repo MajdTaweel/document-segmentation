@@ -15,7 +15,23 @@ def main(path):
 
     preprocessed = Preprocessor(src).preprocess()
 
+    cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
+    cv.imshow('Contours', preprocessed)
+    if cv.waitKey(0) & 0xff == 27:
+        cv.destroyAllWindows()
+
     ccs_text, ccs_non_text, img_text = HeuristicFilter(preprocessed).filter()
+
+    img_h_filter = src.copy()
+    cv.drawContours(img_h_filter, [cc.get_contour()
+                          for cc in ccs_text], -1, (0, 255, 0), 2)
+    cv.drawContours(img_h_filter, [cc.get_contour()
+                          for cc in ccs_non_text], -1, (0, 0, 255), 2)
+
+    cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
+    cv.imshow('Contours', img_h_filter)
+    if cv.waitKey(0) & 0xff == 27:
+        cv.destroyAllWindows()
 
     ccs_text, ccs_non_text2, img_text = MllClassifier(
         img_text).classify_non_text_ccs()
@@ -25,7 +41,7 @@ def main(path):
     ccs_text, ccs_non_text, img_text = Postprocessor(
         preprocessed, ccs_text, ccs_non_text).postprocess()
 
-    ccs_text = TextSegmenter(img_text, ccs_text, ccs_non_text).segment_text()
+    ccs_text = TextSegmenter(img_text, ccs_text, src).segment_text()
 
     cv.drawContours(src, [cc.get_contour()
                           for cc in ccs_text], -1, (0, 255, 0), 2)
@@ -57,4 +73,5 @@ if __name__ == '__main__':
     #     raise Exception(f'Too many arguments: {len(args)}. Only one argument is required.')
 
     # main(args[0])
-    main('img/man.jpg')
+    # main('img/la.png')
+    main('img/PRImA Layout Analysis Dataset/Images/00000201.tif')

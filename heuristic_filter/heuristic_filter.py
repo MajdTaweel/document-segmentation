@@ -1,4 +1,5 @@
 import cv2 as cv
+import numpy as np
 from connected_components.connected_components import get_connected_components
 
 T_AREA = 6
@@ -60,6 +61,9 @@ class HeuristicFilter:
                 ccs_non_text.append(cc)
                 cv.drawContours(
                     self.__img, [cc.get_contour()], -1, (0, 0, 0), -1)
+
+        kernel = np.ones((3, 3), np.uint8)
+        # self.__img = cv.morphologyEx(self.__img, cv.MORPH_CLOSE, kernel)
 
         ccs_text = self.__get_ccs()
 
