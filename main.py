@@ -1,11 +1,7 @@
-import sys
-
 import cv2 as cv
-import numpy as np
 
 from heuristic_filter.heuristic_filter import HeuristicFilter
 from mll_classifier.mll_classifier import MllClassifier
-from postprocessor.postprocessor import Postprocessor
 from preprocessor.preprocessor import Preprocessor
 from text_segmenter.text_segmenter import TextSegmenter
 
@@ -13,42 +9,79 @@ from text_segmenter.text_segmenter import TextSegmenter
 def main(path):
     src = cv.imread(path, cv.IMREAD_UNCHANGED)
 
-    preprocessed = Preprocessor(src).preprocess()
-
-    cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
-    cv.imshow('Contours', preprocessed)
+    cv.namedWindow('Image', cv.WINDOW_FREERATIO)
+    cv.imshow('Image', src)
     if cv.waitKey(0) & 0xff == 27:
         cv.destroyAllWindows()
+
+    # PREPROCESSOR ##########################
+
+    preprocessor = Preprocessor(src)
+    resized_img = preprocessor.get_resized_img()
+    preprocessed = preprocessor.preprocess()
+
+    cv.namedWindow('Preprocessed', cv.WINDOW_FREERATIO)
+    cv.imshow('Preprocessed', preprocessed)
+    if cv.waitKey(0) & 0xff == 27:
+        cv.destroyAllWindows()
+
+    # HEURISTIC FILTER ##########################
 
     ccs_text, ccs_non_text, img_text = HeuristicFilter(preprocessed).filter()
 
-    img_h_filter = src.copy()
+    img_h_filter = resized_img.copy()
     cv.drawContours(img_h_filter, [cc.get_contour()
-                          for cc in ccs_text], -1, (0, 255, 0), 2)
+                                   for cc in ccs_text], -1, (0, 255, 0), 2)
     cv.drawContours(img_h_filter, [cc.get_contour()
-                          for cc in ccs_non_text], -1, (0, 0, 255), 2)
+                                   for cc in ccs_non_text], -1, (0, 0, 255), 2)
 
-    cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
-    cv.imshow('Contours', img_h_filter)
+    cv.namedWindow('Heuristic Filter', cv.WINDOW_FREERATIO)
+    cv.imshow('Heuristic Filter', img_h_filter)
     if cv.waitKey(0) & 0xff == 27:
         cv.destroyAllWindows()
 
-    ccs_text, ccs_non_text2, img_text = MllClassifier(
-        img_text).classify_non_text_ccs()
+    # MLL CLASSIFIER ##########################
 
-    ccs_non_text.extend(ccs_non_text2)
+    ccs_text, mll_ccs_non_text, img_text = MllClassifier(img_text).classify_non_text_ccs()
+    ccs_non_text.extend(mll_ccs_non_text)
 
-    ccs_text, ccs_non_text, img_text = Postprocessor(
-        preprocessed, ccs_text, ccs_non_text).postprocess()
+    img_mll = resized_img.copy()
+    cv.drawContours(img_mll, [cc.get_contour()
+                              for cc in ccs_text], -1, (0, 255, 0), 2)
+    cv.drawContours(img_mll, [cc.get_contour()
+                              for cc in ccs_non_text], -1, (0, 0, 255), 2)
 
-    ccs_text = TextSegmenter(img_text, ccs_text, src).segment_text()
+    cv.namedWindow('MLL Classifier', cv.WINDOW_FREERATIO)
+    cv.imshow('MLL Classifier', img_mll)
+    if cv.waitKey(0) & 0xff == 27:
+        cv.destroyAllWindows()
 
-    cv.drawContours(src, [cc.get_contour()
-                          for cc in ccs_text], -1, (0, 255, 0), 2)
-    cv.drawContours(src, [cc.get_contour()
-                          for cc in ccs_non_text], -1, (0, 0, 255), 2)
-    cv.namedWindow('Contours', cv.WINDOW_FREERATIO)
-    cv.imshow('Contours', src)
+    # POST-PROCESSOR ##########################
+
+    # ccs_text, ccs_non_text, img_text = Postprocessor(img_text, ccs_text, ccs_non_text).postprocess()
+    #
+    # post = resized_img.copy()
+    # cv.drawContours(post, [cc.get_contour()
+    #                        for cc in ccs_text], -1, (0, 255, 0), 2)
+    # cv.drawContours(post, [cc.get_contour()
+    #                        for cc in ccs_non_text], -1, (0, 0, 255), 2)
+    #
+    # cv.namedWindow('Post-processed', cv.WINDOW_FREERATIO)
+    # cv.imshow('Post-processed', post)
+    # if cv.waitKey(0) & 0xff == 27:
+    #     cv.destroyAllWindows()
+
+    # TEXT SEGMENTATION ##########################
+    ccs_text = TextSegmenter(img_text, ccs_text, resized_img).segment_text()
+
+    segmented = resized_img.copy()
+
+    cv.drawContours(segmented, [cc.get_contour()
+                                for cc in ccs_text], -1, (0, 255, 0), 2)
+    cv.drawContours(segmented, [cc.get_contour()
+                                for cc in ccs_non_text], -1, (0, 0, 255), 2)
+    cv.namedWindow('Segmented', cv.WINDOW_FREERATIO)
+    cv.imshow('Segmented', segmented)
     if cv.waitKey(0) & 0xff == 27:
         cv.destroyAllWindows()
 
@@ -74,4 +107,4 @@ if __name__ == '__main__':
 
     # main(args[0])
     # main('img/la.png')
-    main('img/PRImA Layout Analysis Dataset/Images/00000201.tif')
+    main('img/PRImA Layout Analysis Dataset/Images/00000087.tif')

@@ -1,0 +1,111 @@
+%! Author = Majd Taweel
+%! Date = 30-Nov-20
+
+% Preamble
+\documentclass[12pt]{report}
+
+% Packages
+\usepackage{amsmath}
+
+% Document
+\begin{document}
+
+    \title{
+    Document Layout Analysis\\
+    \footnotesize Using Minimum Homogeneity Structure
+    }
+    \author{
+    {Majd Taweel - 1161422}\\
+    {Ibrahim Muala - 1160346}\\\\
+
+    \textbf{Computer Vision}\\
+    \textbf{Instructor:} Aziz Qaroush
+    }
+    \maketitle
+
+    \chapter*{Abstract}
+
+    This report demonstrates our implementation of the Minimum Homogeneity Structure (MHS) Algorithm.
+    It firstly states the problem encountered, the motivation around solving such problem and a brief description
+    of the system proposed.
+    Second, it shows an overview of the proposed system.
+    Then, it provides some results achieved after implementing the proposed system.
+    Finally, it ends with the conclusion.
+
+    \tableofcontents
+
+
+    \chapter{Introduction}
+
+    Document layout analysis is a rising topic in modern days.
+    It has received more attention due to the need of exporting old printed documents into a digital version.
+    This is important because organizations of all sizes and types need to have better and faster
+    access to their previously recorded data, archives and reports that were printed on physical paper.
+    These documents are firstly analysed using an accurate document analysis algorithm and the piped to an
+    Optical Character Recognition (OCR) model to deduce the text content these documents contain.
+
+    The MHS algorithm analyzes documents on several different layers sequentially before classifying the
+    objects contained in the document.
+    It first starts with some pre-processing, outputting a binary (black and white) image.
+    Then the binary image continues to text and non-text classification layer, which separates text and non-text
+    content.
+    This results into two different document for text and non-text content.
+    Those two documents then passes different processes.
+    Text lines are extracted from the text document and then paragraphs are separated using these extracted lines.
+    Text regions are then deduced from the resulted paragraphs.
+    The non-text document continues to yet another classification layer that then determines each non-text element's
+    type (line, table, separator, image and negative-text).
+    After that, the deduced regions from the text and non-text documents are refined and then labelled, resulting in
+    the final page layout.
+
+
+    \chapter{System Overview}
+
+    The MHS algorithm consists of several layer as stated before.
+    These layers are explained in the following sections.
+
+
+    \section{Pre-processing}
+
+    This layer prepares the image for classification and the quality of the operation it does on the image are reflected
+    on the remainder of the layers.
+
+    The operations performed in this layer are as follows:
+    \enumerate{
+    \item If the image is colored it is converted to a grayscale image.
+    \item The image is smoothed to remove some of the noise it may contain.
+    \item The smoothed image is converted to a binary image.
+    \item The binary image is resized to a certain resolution so that it does not take unreasonable computation time if
+    its original resolution is very big.
+    }
+
+
+    \chapter{Heuristic Filter}
+
+    The heuristic filter filters the image from obvious non-text elements depending on some heuristics, hence, the name
+    heuristic filter.
+
+
+    \chapter{Multilevel/Multi-layer Classification}
+
+    This layer consists of two sub-layers, multilevel classification and multi-layer classification.
+    It also contains a recursive filter that is applied on the regions extracted from both sub-layers.
+
+%    \chapter{Postprocessing}
+
+%    \chapter{Text Segmentation}
+%
+%
+%    \chapter{Non-Text Classification}
+
+
+    \chapter{Conclusion}
+
+    To sum up, Document layout analysis is a difficult process that can only produce sufficient outcomes through several
+    levels of processing and computations, as can be seen from the implementation of this system.
+    The layers in this system are based on carefully extracted properties from many documents with different layouts.
+    These layers are heavily dependant on statistics and observations found in most documents, which what makes this
+    system accurate.
+    Nonetheless, it has room for some improvements.
+
+\end{document}

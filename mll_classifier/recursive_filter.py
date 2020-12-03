@@ -2,10 +2,10 @@ import cv2 as cv
 import numpy as np
 
 
-class RecursiveFilter():
-    def __init__(self, img, region):
+class RecursiveFilter:
+    def __init__(self, region):
         super().__init__()
-        self.__img = img.copy()
+        self.__img = region.get_root_img()
         # self.__regions = regions.copy()
         self.__region = region
 
@@ -35,7 +35,8 @@ class RecursiveFilter():
         cv.drawContours(self.__img, [cc.get_contour()
                                      for cc in non_text], -1, (0, 0, 0), -1)
 
-        region.set_img(self.__img)
+        if len(non_text) > 0:
+            region.set_root_img(self.__img)
 
         return len(non_text) > 0, self.__img, non_text
 
@@ -49,7 +50,7 @@ class RecursiveFilter():
             w = cc.get_rect()[2]
             h = cc.get_rect()[3]
             if cc.get_area() == features['max_area'] \
-                and cc.get_area() > k['area'] * features['median_area'] \
+                    and cc.get_area() > k['area'] * features['median_area'] \
                     and ((h == features['max_h'] and h > k['w'] * features['median_h'])
                          or (w == features['max_w'] and w > k['w'] * features['median_w'])):
                 non_text_sus.append(cc)
@@ -79,10 +80,10 @@ class RecursiveFilter():
             rnws = cc.get_rnws()
             num_ln = cc.get_num_ln()
             num_rn = cc.get_num_rn()
-            if (np.min([lnws, rnws]) > np.max([features['median_ws'], features['mean_ws']])
-                    and (np.max([lnws, rnws]) == features['max_ws'] or np.min([lnws, rnws]) > 2 * features['mean_ws'])) \
-                    or ((num_ln == np.max(features['n_ln']) and num_ln > 2)
-                        or (num_rn == np.max(features['n_rn']) and num_rn > 2)):
+            if (np.min([lnws, rnws]) > np.max([features['median_ws'], features['mean_ws']]) and (
+                    np.max([lnws, rnws]) == features['max_ws'] or np.min([lnws, rnws]) > 2 * features['mean_ws'])) or (
+                    (num_ln == np.max(features['n_ln']) and num_ln > 2) or (
+                    num_rn == np.max(features['n_rn']) and num_rn > 2)):
                 non_text.append(cc)
 
         return non_text

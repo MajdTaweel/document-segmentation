@@ -26,7 +26,7 @@ class Postprocessor:
         non_text_image = self.__img.copy()
         for cc in self.__ccs_text:
             x, y, w, h = cc.get_rect()
-            cv.rectangle(non_text_image, (x, y), (x + w, y + h), (0, 0, 0), -1)
+            cv.rectangle(non_text_image, (x, y), (x + w, y + h), (255, 255, 255), -1)
 
         return non_text_image
 
