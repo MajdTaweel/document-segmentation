@@ -41,41 +41,6 @@ class ConnectedComponent:
     def get_hw_rate(self):
         return self.__hw_rate
 
-    # def set_features(self, ccs: List['ConnectedComponent']):
-    #     self.__set_nns(ccs)
-    #
-    #     if self.__lnn != None:
-    #         self.__lnws = self.__rect[0] - \
-    #             (self.__lnn.get_rect()[0] + self.__lnn.get_rect()[2])
-    #         self.__num_ln += 1
-    #
-    #     if self.__rnn != None:
-    #         self.__rnws = self.__rnn.get_rect(
-    #         )[0] - (self.__rect[0] + self.__rect[2])
-    #         self.__num_rn += 1
-    #
-    #     if self.__num_ln + self.__num_rn > 0:
-    #         for cc in ccs:
-    #             if self.__num_ln > 0 \
-    #                     and cc.get_rect()[0] + cc.get_rect()[2] < self.__lnn.get_rect()[0] + self.__lnn.get_rect()[2]:
-    #                 self.__num_ln += 1
-    #             elif self.__num_rn > 0 \
-    #                     and cc.get_rect()[0] > self.__rnn.get_rect()[0]:
-    #                 self.__num_rn += 1
-    #
-    #     return self
-
-    # def __set_nns(self, ccs: List['ConnectedComponent']):
-    #     for cc in ccs:
-    #         if self.is_horizontally_aligned_with(cc):
-    #             if cc.get_rect()[0] + cc.get_rect()[2] < self.__rect[0] and (
-    #                     self.__lnn is None or cc.get_rect()[0] + cc.get_rect()[2] > self.__lnn.get_rect()[0] +
-    #                     self.__lnn.get_rect()[2]):
-    #                 self.__lnn = cc
-    #             elif cc.get_rect()[0] > self.__rect[0] + self.__rect[2] and (
-    #                     self.__rnn is None or cc.get_rect()[0] < self.__rnn.get_rect()[0]):
-    #                 self.__rnn = cc
-
     def get_lnn(self):
         return self.__lnn
 
