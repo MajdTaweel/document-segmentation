@@ -7,9 +7,9 @@ from mll_classifier.mll_classifier import MllClassifier
 
 class NonTextClassifier:
 
-    def __init__(self, non_text_img, ccs_text, ccs_non_text):
+    def __init__(self, img_shape, ccs_text, ccs_non_text):
         super().__init__()
-        self.__non_text_img = non_text_img.copy()
+        self.__img_shape = img_shape
         self.__ccs_text = ccs_text.copy()
         self.__ccs_non_text = ccs_non_text.copy()
         self.__ccs_negative_text = []
@@ -19,16 +19,31 @@ class NonTextClassifier:
         self.__separators = []
         self.__graphics = []
 
+    def classify_non_text_elements(self):
+        for cc in self.__ccs_non_text.copy():
+            self.__classify_cc(cc)
+
+        return {
+            'Paragraph': self.__ccs_text,
+            'Header': self.__ccs_negative_text,
+            'H Lines': self.__h_lines,
+            'V Lines': self.__v_lines,
+            'Table': self.__tables,
+            'Separator': self.__separators,
+            'Image': self.__graphics
+        }
+
     def __classify_cc(self, cc: ConnectedComponent):
         if self.__is_negative_text(cc):
-            # self.__ccs_negative_text.append(cc)
-            self.__ccs_text.append(cc)
+            self.__ccs_negative_text.append(cc)
+            # self.__ccs_text.append(cc)
             self.__ccs_non_text.remove(cc)
         elif self.__is_line(cc):
             if self.__is_h_line(cc):
                 self.__h_lines.append(cc)
             else:
                 self.__v_lines.append(cc)
+            self.__ccs_non_text.remove(cc)
         elif self.__is_table(cc):
             self.__tables.append(cc)
             self.__ccs_non_text.remove(cc)
@@ -76,4 +91,13 @@ class NonTextClassifier:
         return False
 
     def __is_separator(self, cc):
-        return False
+        if cc.get_dens() > 0.02:
+            return False
+        blank = np.zeros(self.__img_shape, np.uint8)
+
+        img1 = cv.drawContours(blank.copy(), [cc.get_contour()], -1, 255, -1)
+        img2 = cv.drawContours(blank.copy(), [cc2.get_contour() for cc2 in self.__ccs_text], -1, 255, -1)
+
+        ccs_intersection = np.logical_and(img1, img2)
+
+        return ccs_intersection.any()

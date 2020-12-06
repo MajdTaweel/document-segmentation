@@ -4,6 +4,8 @@ from heuristic_filter.heuristic_filter import HeuristicFilter
 from mll_classifier.mll_classifier import MllClassifier
 from preprocessor.preprocessor import Preprocessor
 from text_segmenter.text_segmenter import TextSegmenter
+from non_text_classifier.non_text_classifier import NonTextClassifier
+from region_refiner.region_refiner import RegionRefiner
 
 
 def main(path):
@@ -85,21 +87,17 @@ def main(path):
     if cv.waitKey(0) & 0xff == 27:
         cv.destroyAllWindows()
 
-    # Region refinement and labelling ##########################
-    # region_refiner = RegionRefiner(resized_img.shape[:2], ccs_text, ccs_non_text)
-    #
-    # ccs_text, ccs_non_text = region_refiner.remove_intersected_regions()
-    #
-    # refined = resized_img.copy()
-    #
-    # cv.drawContours(refined, [cc.get_contour()
-    #                           for cc in ccs_text], -1, (0, 255, 0), 2)
-    # cv.drawContours(refined, [cc.get_contour()
-    #                           for cc in ccs_non_text], -1, (0, 0, 255), 2)
-    # cv.namedWindow('Refined', cv.WINDOW_FREERATIO)
-    # cv.imshow('Refined', refined)
-    # if cv.waitKey(0) & 0xff == 27:
-    #     cv.destroyAllWindows()
+    # Non-text classification ##########################
+    ccs = NonTextClassifier(resized_img.shape[:2], ccs_text, ccs_non_text).classify_non_text_elements()
+
+    # Region refinement and labeling ##########################
+    region_refiner = RegionRefiner()
+    labeled = region_refiner.label_regions(resized_img, ccs)
+
+    cv.namedWindow('Labeled', cv.WINDOW_FREERATIO)
+    cv.imshow('Labeled', labeled)
+    if cv.waitKey(0) & 0xff == 27:
+        cv.destroyAllWindows()
 
 
 # def get_bounding_rect(cc):

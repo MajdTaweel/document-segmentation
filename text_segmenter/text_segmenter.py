@@ -58,8 +58,8 @@ class TextSegmenter:
         dilation = cv.dilate(self.__img.copy(), kernel)
         closing = cv.morphologyEx(dilation, cv.MORPH_CLOSE, kernel, iterations=4)
         ccs = get_connected_components(closing, external=True)
-        region_refiner = RegionRefiner(closing.shape, ccs, self.__ccs_non_text)
-        ccs, self.__ccs_non_text, ccs_text_new = region_refiner.remove_intersected_regions()
+        ccs, self.__ccs_non_text, ccs_text_new = RegionRefiner.remove_intersected_regions(closing.shape, ccs,
+                                                                                          self.__ccs_non_text)
         for cc_text_new in ccs_text_new:
             x, y, w, h = cc_text_new.get_rect()
             cv.rectangle(self.__img, (x, y + 3), (x + w, y + h - 3), 255, -1)
