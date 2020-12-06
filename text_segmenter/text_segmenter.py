@@ -4,16 +4,18 @@ import numpy as np
 from connected_components.connected_components import get_connected_components, union
 from mll_classifier.mll_classifier import MllClassifier
 from mll_classifier.region import Region
+from region_refiner.region_refiner import RegionRefiner
 from text_segmenter.white_space_filter import WhiteSpaceFilter
 
 THETA = 1.2
 
 
 class TextSegmenter:
-    def __init__(self, img, ccs_text, src):
+    def __init__(self, img, ccs_text, ccs_non_text, src):
         super().__init__()
         self.__img = img.copy()
-        self.__ccs_text = ccs_text
+        self.__ccs_text = ccs_text.copy()
+        self.__ccs_non_text = ccs_non_text.copy()
         self.src = src.copy()
 
     def segment_text(self):
@@ -49,13 +51,23 @@ class TextSegmenter:
         if cv.waitKey(0) & 0xff == 27:
             cv.destroyAllWindows()
 
-        return ccs_text
+        return ccs_text, self.__ccs_non_text
 
     def __get_text_blocks(self):
         kernel = np.ones((5, 1), np.uint8)
         dilation = cv.dilate(self.__img.copy(), kernel)
         closing = cv.morphologyEx(dilation, cv.MORPH_CLOSE, kernel, iterations=4)
         ccs = get_connected_components(closing, external=True)
+        region_refiner = RegionRefiner(closing.shape, ccs, self.__ccs_non_text)
+        ccs, self.__ccs_non_text, ccs_text_new = region_refiner.remove_intersected_regions()
+        for cc_text_new in ccs_text_new:
+            x, y, w, h = cc_text_new.get_rect()
+            cv.rectangle(self.__img, (x, y + 3), (x + w, y + h - 3), 255, -1)
+
+        cv.namedWindow('Bounding Box*', cv.WINDOW_FREERATIO)
+        cv.imshow('Bounding Box*', self.__img)
+        if cv.waitKey(0) & 0xff == 27:
+            cv.destroyAllWindows()
 
         return [cc.get_rect() for cc in ccs]
 
@@ -238,7 +250,6 @@ class TextSegmenter:
 
         # kernel = np.ones((kernel_height, kernel_width), np.uint8)
         kernel = np.ones((5, 1), np.uint8)
-
         closing = cv.morphologyEx(img, cv.MORPH_CLOSE, kernel, iterations=4)
 
         # kernel = np.ones((kernel_height * 2, kernel_width * 2), np.uint8)

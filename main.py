@@ -72,7 +72,7 @@ def main(path):
     #     cv.destroyAllWindows()
 
     # TEXT SEGMENTATION ##########################
-    ccs_text = TextSegmenter(img_text, ccs_text, resized_img).segment_text()
+    ccs_text, ccs_non_text = TextSegmenter(img_text, ccs_text, ccs_non_text, resized_img).segment_text()
 
     segmented = resized_img.copy()
 
@@ -84,6 +84,22 @@ def main(path):
     cv.imshow('Segmented', segmented)
     if cv.waitKey(0) & 0xff == 27:
         cv.destroyAllWindows()
+
+    # Region refinement and labelling ##########################
+    # region_refiner = RegionRefiner(resized_img.shape[:2], ccs_text, ccs_non_text)
+    #
+    # ccs_text, ccs_non_text = region_refiner.remove_intersected_regions()
+    #
+    # refined = resized_img.copy()
+    #
+    # cv.drawContours(refined, [cc.get_contour()
+    #                           for cc in ccs_text], -1, (0, 255, 0), 2)
+    # cv.drawContours(refined, [cc.get_contour()
+    #                           for cc in ccs_non_text], -1, (0, 0, 255), 2)
+    # cv.namedWindow('Refined', cv.WINDOW_FREERATIO)
+    # cv.imshow('Refined', refined)
+    # if cv.waitKey(0) & 0xff == 27:
+    #     cv.destroyAllWindows()
 
 
 # def get_bounding_rect(cc):
@@ -107,4 +123,4 @@ if __name__ == '__main__':
 
     # main(args[0])
     # main('img/la.png')
-    main('img/PRImA Layout Analysis Dataset/Images/00000990.tif')
+    main('img/PRImA Layout Analysis Dataset/Images/00000880.tif')

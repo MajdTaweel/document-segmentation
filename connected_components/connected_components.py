@@ -140,6 +140,38 @@ def union(a, b):
     return x, y, w, h
 
 
+def intersection(a, b):
+    x = max(a[0], b[0])
+    y = max(a[1], b[1])
+    w = min(a[0] + a[2], b[0] + b[2]) - x
+    h = min(a[1] + a[3], b[1] + b[3]) - y
+    if w < 0 or h < 0:
+        return ()
+    return x, y, w, h
+
+
+def includes(img_shape, cc1, cc2):
+    blank = np.zeros(img_shape)
+
+    img1 = cv.drawContours(blank.copy(), [cc1.get_contour()], -1, 255, -1)
+    img2 = cv.drawContours(blank.copy(), [cc2.get_contour()], -1, 255, -1)
+
+    ccs_intersection = np.logical_and(img1, img2)
+
+    return ccs_intersection.all()
+
+
+def does_intersect(img_shape, cc1: ConnectedComponent, cc2: ConnectedComponent):
+    blank = np.zeros(img_shape, np.uint8)
+
+    img1 = cv.drawContours(blank.copy(), [cc1.get_contour()], -1, 255, -1)
+    img2 = cv.drawContours(blank.copy(), [cc2.get_contour()], -1, 255, -1)
+
+    ccs_intersection = np.logical_and(img1, img2)
+
+    return ccs_intersection.any()
+
+
 def is_horizontally_aligned_with(a, b):
     y = max(a[1], b[1])
     h = min(a[1] + a[3], b[1] + b[3]) - y
