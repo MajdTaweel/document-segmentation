@@ -161,8 +161,6 @@ class TextSegmenter:
         curr = 1
         nextt = 2
 
-        th = 0.8
-
         lines = [cc.get_rect() for cc in hr.get_ccs()]
 
         splits = []
@@ -170,10 +168,19 @@ class TextSegmenter:
             x_p, y_p, w_p, h_p = lines[prev]
             x_c, y_c, w_c, h_c = lines[curr]
             x_n, y_n, w_n, h_n = lines[nextt]
-            if w_c <= w_p * th:
-                if w_n <= w_p * th or (w_c <= w_n * th and (x_c * th > x_n or x_c + w_c < x_n + w_n * th)):
+            th = h_p
+            if w_c <= w_p - th:
+                if w_n <= w_p - th:
                     splits.append(lines[curr][1] + lines[curr][3])
                     splits.append(lines[nextt][1])
+                elif w_c <= w_n - th:
+                    if x_c - th >= x_n:
+                        splits.append(lines[prev][1] + lines[prev][3])
+                        splits.append(lines[curr][1])
+                    elif x_c + w_c < x_n + w_n - th:
+                        splits.append(lines[curr][1] + lines[curr][3])
+                        splits.append(lines[nextt][1])
+                    pass
             prev += 1
             curr += 1
             nextt += 1

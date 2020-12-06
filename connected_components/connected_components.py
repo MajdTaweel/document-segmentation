@@ -172,6 +172,17 @@ def does_intersect(img_shape, cc1: ConnectedComponent, cc2: ConnectedComponent):
     return ccs_intersection.any()
 
 
+def intersection_percentage(cc1: ConnectedComponent, cc2: ConnectedComponent):
+    rects_intersection = intersection(cc1.get_rect(), cc2.get_rect())
+    if len(rects_intersection) == 0:
+        return 0
+    min_area = cc1.get_rect_area()
+    min_area = min(min_area, cc2.get_rect_area())
+    intersection_area = rects_intersection[2] * rects_intersection[3]
+
+    return intersection_area / min_area
+
+
 def is_horizontally_aligned_with(a, b):
     y = max(a[1], b[1])
     h = min(a[1] + a[3], b[1] + b[3]) - y

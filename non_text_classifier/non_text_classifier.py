@@ -26,15 +26,17 @@ class NonTextClassifier:
         return {
             'Paragraph': self.__ccs_text,
             'Header': self.__ccs_negative_text,
-            'H Lines': self.__h_lines,
-            'V Lines': self.__v_lines,
+            'H Line': self.__h_lines,
+            'V Line': self.__v_lines,
             'Table': self.__tables,
             'Separator': self.__separators,
             'Image': self.__graphics
         }
 
     def __classify_cc(self, cc: ConnectedComponent):
-        if self.__is_negative_text(cc):
+        if cc.get_area() <= 50:
+            self.__ccs_non_text.remove(cc)
+        elif self.__is_negative_text(cc):
             self.__ccs_negative_text.append(cc)
             # self.__ccs_text.append(cc)
             self.__ccs_non_text.remove(cc)
@@ -55,12 +57,13 @@ class NonTextClassifier:
             self.__ccs_non_text.remove(cc)
 
     def __is_negative_text(self, cc: ConnectedComponent):
-        if cc.get_dens() < 0.9:
+        dens = cc.get_dens()
+        if cc.get_dens() < 0.9 or cc.get_dens() >= 0.99:
             return False
 
         x, y, w, h = cc.get_rect()
         blank = np.zeros((h, w), np.uint8)
-        negative_candidate = cv.drawContours(blank, [cc], -1, 255, -1)
+        negative_candidate = cv.drawContours(blank, [cc.get_contour()], -1, 255, -1)
         negative_candidate = cv.bitwise_not(negative_candidate)
 
         mll = MllClassifier(negative_candidate)
@@ -81,7 +84,7 @@ class NonTextClassifier:
         return area_text > area_non_text
 
     def __is_line(self, cc):
-        return cc.get_dens() <= 0.1
+        return cc.get_hw_rate() <= 0.1
 
     def __is_h_line(self, cc):
         _, _, w, h = cc.get_rect()

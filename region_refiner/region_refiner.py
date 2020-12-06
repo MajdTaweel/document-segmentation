@@ -1,7 +1,7 @@
 import cv2 as cv
 import numpy as np
 
-from connected_components.connected_components import get_connected_components
+from connected_components.connected_components import get_connected_components, intersection_percentage, intersection
 
 
 class RegionRefiner:
@@ -10,8 +10,8 @@ class RegionRefiner:
         self.__colors = {
             'Paragraph': ((73, 48, 0), (255, 255, 255)),
             'Header': ((40, 40, 214), (255, 255, 255)),
-            'H Lines': ((0, 127, 247), (255, 255, 255)),
-            'V Lines': ((73, 191, 7252), (0, 0, 0)),
+            'H Line': ((0, 127, 247), (255, 255, 255)),
+            'V Line': ((73, 191, 7252), (0, 0, 0)),
             'Table': ((183, 226, 234), (0, 0, 0)),
             'Separator': ((36, 0, 71), (255, 255, 255)),
             'Image': ((199, 136, 86), (255, 255, 255))
@@ -28,8 +28,10 @@ class RegionRefiner:
         for cc_non_text in ccs_non_text.copy():
             for cc_text in ccs_text:
                 # if cc_text.contains(cc_non_text) or does_intersect(self.__img_shape, cc_text, cc_non_text):
-                # if includes(self.__img_shape, cc_text, cc_non_text):
-                if cc_text.contains(cc_non_text):
+                # if includes(img_shape, cc_text, cc_non_text):
+                # if cc_text.contains(cc_non_text):
+                if cc_text.get_rect_area() > cc_non_text.get_rect_area() and \
+                        intersection_percentage(cc_text, cc_non_text) >= 0.9:
                     x, y, w, h = cc_non_text.get_rect()
                     cv.rectangle(img_text, (x, y), (x + w, y + h), 255, -1)
                     ccs_text_new.append(cc_non_text)
@@ -39,7 +41,9 @@ class RegionRefiner:
         ccs_non_text_new = []
         for cc_text in ccs_text:
             for cc_non_text in ccs_non_text:
-                if cc_non_text.contains(cc_text):
+                # if cc_non_text.contains(cc_text) and cc_non_text.get_dens() > 0.02:
+                if cc_non_text.get_rect_area() > cc_text.get_rect_area() and \
+                        intersection_percentage(cc_non_text, cc_text) >= 0.9 and cc_non_text.get_dens() > 0.02:
                     x, y, w, h = cc_text.get_rect()
                     cv.rectangle(img_text, (x, y), (x + w, y + h), 0, -1)
                     ccs_non_text_new.append(cc_text)
@@ -60,6 +64,24 @@ class RegionRefiner:
             cv.destroyAllWindows()
         ccs_text = get_connected_components(img_text, external=True)
         return ccs_text, ccs_non_text, ccs_text_new, ccs_non_text_new
+
+    def refine_non_text_regions(self, img_shape, ccs_non_text):
+        img_non_text = np.zeros(img_shape, np.uint8)
+        cv.drawContours(img_non_text, [cc.get_contour() for cc in ccs_non_text], -1, 255, -1)
+        for cc1 in ccs_non_text:
+            intersections_sum = 0
+            areas_sum = 0
+            for cc2 in ccs_non_text:
+                if cc1 is cc2:
+                    continue
+                rects_intersection = intersection(cc1.get_rect(), cc2.get_rect())
+                if len(rects_intersection) > 0:
+                    areas_sum += cc2.get_rect_area()
+                    intersections_sum += rects_intersection[2] * rects_intersection[3]
+            if areas_sum > 0 and intersections_sum / areas_sum >= 0.9:
+                x, y, w, h = cc1.get_rect()
+                cv.rectangle(img_non_text, (x, y), (x + w, y + h), 255, -1)
+        return get_connected_components(img_non_text, external=True)
 
     def label_regions(self, img, ccs):
         img = img.copy()

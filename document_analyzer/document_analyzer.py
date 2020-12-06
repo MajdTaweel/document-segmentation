@@ -44,6 +44,7 @@ class DocumentAnalyzer:
         self.__apply_heuristic_filter(preprocessed)
         self.__apply_mll_classifier()
         self.__segment_text()
+        self.__refine_non_text_elements()
         self.__classify_non_text_element()
         self.__label_regions()
         self.__rescale_img_to_original()
@@ -88,6 +89,10 @@ class DocumentAnalyzer:
                 (self.__ccs_non_text, (0, 0, 255))
             ]
             draw_contours_then_show_and_wait('Segmented', self.__img_resized, ccs_and_colors)
+
+    def __refine_non_text_elements(self):
+        self.__ccs_non_text = self.__region_refiner.refine_non_text_regions(self.__img_resized.shape[:2],
+                                                                            self.__ccs_non_text)
 
     def __classify_non_text_element(self):
         self.__ccs_dict = NonTextClassifier(self.__img_resized.shape[:2], self.__ccs_text,
