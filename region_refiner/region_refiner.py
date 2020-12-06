@@ -36,6 +36,18 @@ class RegionRefiner:
                     ccs_non_text.remove(cc_non_text)
                     break
 
+        ccs_non_text_new = []
+        for cc_text in ccs_text:
+            for cc_non_text in ccs_non_text:
+                if cc_non_text.contains(cc_text):
+                    x, y, w, h = cc_text.get_rect()
+                    cv.rectangle(img_text, (x, y), (x + w, y + h), 0, -1)
+                    ccs_non_text_new.append(cc_text)
+                    break
+
+        ccs_non_text = ccs_non_text.copy()
+        ccs_non_text.extend(ccs_non_text_new)
+
         cv.namedWindow('IMg text1', cv.WINDOW_FREERATIO)
         cv.imshow('IMg text1', img_text)
         if cv.waitKey(0) & 0xff == 27:
@@ -47,7 +59,7 @@ class RegionRefiner:
         if cv.waitKey(0) & 0xff == 27:
             cv.destroyAllWindows()
         ccs_text = get_connected_components(img_text, external=True)
-        return ccs_text.copy(), ccs_non_text.copy(), ccs_text_new
+        return ccs_text, ccs_non_text, ccs_text_new, ccs_non_text_new
 
     def label_regions(self, img, ccs):
         img = img.copy()
