@@ -1,4 +1,5 @@
 import cv2 as cv
+import os
 
 from heuristic_filter.heuristic_filter import HeuristicFilter
 from mll_classifier.mll_classifier import MllClassifier
@@ -23,7 +24,7 @@ def draw_contours_then_show_and_wait(title, img, ccs_and_colors_list):
 
 
 class DocumentAnalyzer:
-    def __init__(self, path, debug=False):
+    def __init__(self, path: str, debug=False):
         self.__src = cv.imread(path, cv.IMREAD_UNCHANGED)
         self.__preprocessor = Preprocessor(self.__src)
         self.__region_refiner = RegionRefiner()
@@ -35,6 +36,7 @@ class DocumentAnalyzer:
         self.__img_labeled = None
         self.__img_labeled_original_size = None
         self.__debug = debug
+        self.__img_name = path.split('/')[-1]
 
     def analyze_document(self):
         if self.__debug:
@@ -48,6 +50,7 @@ class DocumentAnalyzer:
         self.__classify_non_text_element()
         self.__label_regions()
         self.__rescale_img_to_original()
+        self.__store_output_img()
 
     def __preprocess(self):
         self.__img_resized = self.__preprocessor.get_resized_img()
@@ -106,3 +109,12 @@ class DocumentAnalyzer:
 
     def __rescale_img_to_original(self):
         self.__img_labeled_original_size = self.__preprocessor.resize_img_to_original_size(self.__img_labeled)
+
+    def __store_output_img(self):
+        if not os.path.exists('./out'):
+            os.mkdir('./out')
+
+        if not os.path.exists('./out/img'):
+            os.mkdir('./out/img')
+
+        cv.imwrite(f'./out/img/{self.__img_name}', self.__img_labeled_original_size)
