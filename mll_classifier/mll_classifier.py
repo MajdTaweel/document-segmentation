@@ -88,8 +88,7 @@ class MllClassifier:
         i = 0
         new_regions = []
         while i < len(regions):
-            region_changed, next_regions = regions[i].get_next_level_homogeneous_regions(
-            )
+            region_changed, next_regions = regions[i].get_next_level_homogeneous_regions()
 
             new_regions.extend(next_regions)
 
@@ -103,8 +102,7 @@ class MllClassifier:
         regions = [self.__region]
         finished_regions = []
         while len(regions) > 0:
-            region_changed, next_regions = regions[0].get_next_level_homogeneous_regions(
-            )
+            region_changed, next_regions = regions[0].get_next_level_homogeneous_regions()
 
             if region_changed:
                 regions.extend(next_regions)

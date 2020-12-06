@@ -107,4 +107,4 @@ if __name__ == '__main__':
 
     # main(args[0])
     # main('img/la.png')
-    main('img/PRImA Layout Analysis Dataset/Images/00000087.tif')
+    main('img/PRImA Layout Analysis Dataset/Images/00000990.tif')

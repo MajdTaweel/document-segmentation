@@ -1,6 +1,8 @@
+from typing import List
+
 import numpy as np
 
-from connected_components.connected_components import get_connected_components, set_ccs_neighbors
+from connected_components.connected_components import get_connected_components, set_ccs_neighbors, ConnectedComponent
 
 T_VAR = 1.3
 
@@ -22,23 +24,26 @@ class Region:
         if vertical is None:
             vertical = self.__var_vw > self.__var_hw
 
+        split = False
         for i in range(2):
-            split = False
+            # split = False
             split_regions = []
             if self.get_var_b(vertical) > self.__t_var or self.get_var_w(vertical) > self.__t_var:
-                split2, split_regions = self.__split_region(region, vertical)
-                split = split or split2
+                # split2, split_regions = self.__split_region(region, vertical)
+                # split = split or split2
+                split, split_regions = self.__split_region(region, vertical)
 
             if split:
-                vertical = not vertical
-                new_split_regions = []
-                for split_region in split_regions:
-                    if split_region.get_var_b(vertical) > self.__t_var or self.get_var_w(vertical) > self.__t_var:
-                        _, split_regions2 = split_region.__split_region(split_region, vertical)
-                        new_split_regions.extend(split_regions2)
-                    else:
-                        new_split_regions.append(split_region)
-                return True, new_split_regions
+                # vertical = not vertical
+                # new_split_regions = []
+                # for split_region in split_regions:
+                #     if split_region.get_var_b(vertical) > self.__t_var or self.get_var_w(vertical) > self.__t_var:
+                #         _, split_regions2 = split_region.__split_region(split_region, vertical)
+                #         new_split_regions.extend(split_regions2)
+                #     else:
+                #         new_split_regions.append(split_region)
+                # return True, new_split_regions
+                return True, split_regions
             elif not split:
                 vertical = not vertical
 
@@ -309,7 +314,7 @@ class Region:
         else:
             return self.__var_hw
 
-    def get_ccs(self):
+    def get_ccs(self) -> List[ConnectedComponent]:
         return self.__ccs
 
     def set_features(self):
@@ -328,7 +333,6 @@ class Region:
             widths.append(cc.get_rect()[2])
 
         ws = [cc.get_rnws() for cc in ccs if cc.get_rnws() > 0]
-        print(ws)
 
         if len(ws) == 0:
             ws.append(0)
@@ -398,13 +402,15 @@ class Region:
         return self.__root_img.copy()
 
     def split_horizontally_at(self, splits):
+        if len(splits) == 0:
+            return [self]
+
         regions_rects = self.__get_split_regions_rects(self, splits, False)
 
         regions = [Region(region_rect, self.__root_img) for region_rect in regions_rects]
-
         regions = [region for region in regions if len(region.get_ccs()) > 0]
 
         return regions
 
-    def get_hcs(self):
-        return self.__hcs
+    def get_hcs(self) -> List[List[ConnectedComponent]]:
+        return self.__hcs.copy()

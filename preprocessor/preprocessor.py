@@ -4,8 +4,8 @@ from .binarizer import Binarizer
 
 KERNEL_SIZE = 5
 # Aspect ration of 1.414:1 is preferred which is A4 paper's aspect ratio
-SCALE_RESOLUTION = (850, 1100)
-SCALE_RESOLUTION_INV = (1100, 850)
+SCALE_RESOLUTION = (900, 1200)
+SCALE_RESOLUTION_INV = (1200, 900)
 
 
 class Preprocessor:

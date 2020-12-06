@@ -85,9 +85,12 @@ class ConnectedComponent:
         self.__rnws = self.__rnn.get_rect()[0] - (self.get_rect()[0] + self.get_rect()[2])
 
 
-def get_connected_components(img, offset=None) -> List[ConnectedComponent]:
+def get_connected_components(img, offset=None, external=False) -> List[ConnectedComponent]:
+    method = cv.RETR_TREE
+    if external:
+        method = cv.RETR_EXTERNAL
     contours, _ = cv.findContours(
-        img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE, offset=offset)[-2:]
+        img, method, cv.CHAIN_APPROX_SIMPLE, offset=offset)[-2:]
     return [ConnectedComponent(contour) for contour in contours]
 
 
@@ -98,23 +101,23 @@ def set_ccs_neighbors(ccs: List[ConnectedComponent]) -> List[List[ConnectedCompo
     if len(ccs) == 1:
         return [[ccs[0]]]
 
-    ccs_sorted = ccs.copy()
-    ccs_sorted.sort(key=lambda cc: cc.get_rect()[1])
+    ccs = ccs.copy()
+    ccs.sort(key=lambda cc: cc.get_rect()[1])
     hcs = []
     cc1 = ccs[0]
     hc = [cc1]
     for i, cc2 in enumerate(ccs[1:]):
         if cc1.is_horizontally_aligned_with(cc2):
             hc.append(cc2)
-            if i == len(ccs) - 2:
-                hcs.append(hc)
-            else:
-                cc1 = cc2
+            cc1 = cc2
         else:
             hc.sort(key=lambda cc: cc.get_rect()[0])
             hcs.append(hc)
             cc1 = cc2
             hc = [cc1]
+        if i == len(ccs) - 2:
+            hc.sort(key=lambda cc: cc.get_rect()[0])
+            hcs.append(hc)
 
     for hc in hcs:
         for i, cc in enumerate(hc):
@@ -135,3 +138,15 @@ def union(a, b):
     w = max(a[0] + a[2], b[0] + b[2]) - x
     h = max(a[1] + a[3], b[1] + b[3]) - y
     return x, y, w, h
+
+
+def is_horizontally_aligned_with(a, b):
+    y = max(a[1], b[1])
+    h = min(a[1] + a[3], b[1] + b[3]) - y
+    return h >= 0
+
+
+def is_vertically_aligned(a, b):
+    x = max(a[0], b[0])
+    w = min(a[0] + a[2], b[0] + b[2]) - x
+    return w >= 0

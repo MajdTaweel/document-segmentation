@@ -46,8 +46,8 @@ class HeuristicFilter:
         ccs = self.__get_ccs()
         ccs_noise = []
         for cc in ccs:
-            # if cc.get_area() < self.__t_area or cc.get_dens() < self.__t_dens or cc.get_hw_rate() < self.__t_rate:
-            if cc.get_area() < self.__t_area or cc.get_dens() < self.__t_dens:
+            if cc.get_area() < self.__t_area or cc.get_dens() < self.__t_dens or cc.get_hw_rate() < self.__t_rate:
+                # if cc.get_area() < self.__t_area or cc.get_dens() < self.__t_dens:
                 ccs_noise.append(cc)
 
         return ccs_noise
