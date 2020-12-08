@@ -9,7 +9,7 @@ class RegionRefiner:
     def __init__(self):
         self.__colors = {
             'Paragraph': ((73, 48, 0), (255, 255, 255)),
-            'Header': ((40, 40, 214), (255, 255, 255)),
+            'Heading': ((40, 40, 214), (255, 255, 255)),
             'H Line': ((0, 127, 247), (255, 255, 255)),
             'V Line': ((73, 191, 7252), (0, 0, 0)),
             'Table': ((183, 226, 234), (0, 0, 0)),
@@ -52,16 +52,16 @@ class RegionRefiner:
         ccs_non_text = ccs_non_text.copy()
         ccs_non_text.extend(ccs_non_text_new)
 
-        cv.namedWindow('IMg text1', cv.WINDOW_FREERATIO)
-        cv.imshow('IMg text1', img_text)
-        if cv.waitKey(0) & 0xff == 27:
-            cv.destroyAllWindows()
+        # cv.namedWindow('IMg text1', cv.WINDOW_FREERATIO)
+        # cv.imshow('IMg text1', img_text)
+        # if cv.waitKey(0) & 0xff == 27:
+        #     cv.destroyAllWindows()
         kernel = np.ones((5, 1), np.uint8)
         img_text = cv.morphologyEx(img_text, cv.MORPH_CLOSE, kernel, iterations=4)
-        cv.namedWindow('IMg text2', cv.WINDOW_FREERATIO)
-        cv.imshow('IMg text2', img_text)
-        if cv.waitKey(0) & 0xff == 27:
-            cv.destroyAllWindows()
+        # cv.namedWindow('IMg text2', cv.WINDOW_FREERATIO)
+        # cv.imshow('IMg text2', img_text)
+        # if cv.waitKey(0) & 0xff == 27:
+        #     cv.destroyAllWindows()
         ccs_text = get_connected_components(img_text, external=True)
         return ccs_text, ccs_non_text, ccs_text_new, ccs_non_text_new
 
@@ -69,6 +69,8 @@ class RegionRefiner:
         img_non_text = np.zeros(img_shape, np.uint8)
         cv.drawContours(img_non_text, [cc.get_contour() for cc in ccs_non_text], -1, 255, -1)
         for cc1 in ccs_non_text:
+            if cc1.get_dens() <= 0.02:
+                continue
             intersections_sum = 0
             areas_sum = 0
             for cc2 in ccs_non_text:
@@ -85,11 +87,13 @@ class RegionRefiner:
 
     def label_regions(self, img, ccs):
         img = img.copy()
+        img_labeled = img.copy()
         for key in ccs.keys():
             for cc in ccs[key]:
                 cv.drawContours(img, [cc.get_contour()], -1, self.__colors[key][0], 2)
+                cv.drawContours(img_labeled, [cc.get_contour()], -1, self.__colors[key][0], 2)
                 x, y, _, _ = cc.get_rect()
                 ((w, h), b) = cv.getTextSize(key, cv.FONT_HERSHEY_DUPLEX, 0.5, 1)
-                cv.rectangle(img, (x + 2, y + 2), (x + w + 4, y + h + 4), self.__colors[key][0], -1)
-                cv.putText(img, key, (x + 4, y + b + 4), cv.FONT_HERSHEY_DUPLEX, 0.5, self.__colors[key][1], 1)
-        return img
+                cv.rectangle(img_labeled, (x + 2, y + 2), (x + w + 4, y + h + 4), self.__colors[key][0], -1)
+                cv.putText(img_labeled, key, (x + 4, y + b + 4), cv.FONT_HERSHEY_DUPLEX, 0.5, self.__colors[key][1], 1)
+        return img, img_labeled

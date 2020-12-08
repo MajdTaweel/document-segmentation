@@ -338,7 +338,7 @@ class Region:
             ws.append(0)
 
         self.__ws = ws
-        self.__max_area = np.max(areas)
+        self.__max_area = np.max(areas, initial=0)
         self.__median_area = np.median(areas)
         self.__mean_area = np.average(areas)
         self.__max_h = np.max(heights)

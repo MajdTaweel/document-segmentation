@@ -63,4 +63,4 @@ class Preprocessor:
         return self.__resized_img
 
     def resize_img_to_original_size(self, img):
-        return cv.resize(img, self.__original_img_size, interpolation=cv.INTER_AREA)
+        return cv.resize(img, (self.__original_img_size[1], self.__original_img_size[0]), interpolation=cv.INTER_AREA)

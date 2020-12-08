@@ -15,10 +15,10 @@ class WhiteSpaceFilter:
         # self.__ccs_text_large = self.__remove_large_text_ccs(hrs)
         self.__filter_ws_rects(hr)
         # TODO: Remove
-        cv.namedWindow('Color filtered', cv.WINDOW_FREERATIO)
-        cv.imshow('Color filtered', self.src)
-        if cv.waitKey(0) & 0xff == 27:
-            cv.destroyAllWindows()
+        # cv.namedWindow('Color filtered', cv.WINDOW_FREERATIO)
+        # cv.imshow('Color filtered', self.src)
+        # if cv.waitKey(0) & 0xff == 27:
+        #     cv.destroyAllWindows()
 
         return self.__img
 

@@ -25,7 +25,7 @@ class NonTextClassifier:
 
         return {
             'Paragraph': self.__ccs_text,
-            'Header': self.__ccs_negative_text,
+            'Heading': self.__ccs_negative_text,
             'H Line': self.__h_lines,
             'V Line': self.__v_lines,
             'Table': self.__tables,
@@ -98,7 +98,8 @@ class NonTextClassifier:
             return False
         blank = np.zeros(self.__img_shape, np.uint8)
 
-        img1 = cv.drawContours(blank.copy(), [cc.get_contour()], -1, 255, -1)
+        x, y, w, h = cc.get_rect()
+        img1 = cv.rectangle(blank.copy(), (x, y), (x + w, y + h), 255, -1)
         img2 = cv.drawContours(blank.copy(), [cc2.get_contour() for cc2 in self.__ccs_text], -1, 255, -1)
 
         ccs_intersection = np.logical_and(img1, img2)

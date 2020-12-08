@@ -27,10 +27,10 @@ class TextSegmenter:
         for text_block in text_blocks:
             x, y, w, h = text_block
             cv.rectangle(img_blocks, (x, y), (x + w, y + h), (255, 0, 0), 4)
-        cv.namedWindow('Text Blocks', cv.WINDOW_FREERATIO)
-        cv.imshow('Text Blocks', img_blocks)
-        if cv.waitKey(0) & 0xff == 27:
-            cv.destroyAllWindows()
+        # cv.namedWindow('Text Blocks', cv.WINDOW_FREERATIO)
+        # cv.imshow('Text Blocks', img_blocks)
+        # if cv.waitKey(0) & 0xff == 27:
+        #     cv.destroyAllWindows()
 
         hrs = self.__segment_paragraphs(text_blocks)
         # TODO: REMOVE
@@ -38,18 +38,18 @@ class TextSegmenter:
         for hr in hrs:
             x, y, w, h = hr.get_rect()
             cv.rectangle(img_blocks, (x, y), (x + w, y + h), (255, 0, 255), 4)
-        cv.namedWindow('Paragraphs', cv.WINDOW_FREERATIO)
-        cv.imshow('Paragraphs', img_blocks)
-        if cv.waitKey(0) & 0xff == 27:
-            cv.destroyAllWindows()
+        # cv.namedWindow('Paragraphs', cv.WINDOW_FREERATIO)
+        # cv.imshow('Paragraphs', img_blocks)
+        # if cv.waitKey(0) & 0xff == 27:
+        #     cv.destroyAllWindows()
 
         ccs_text = self.__smooth_regions(hrs)
 
         # TODO: REMOVE
-        cv.namedWindow('Bounding Box Smoothed', cv.WINDOW_FREERATIO)
-        cv.imshow('Bounding Box Smoothed', self.__img)
-        if cv.waitKey(0) & 0xff == 27:
-            cv.destroyAllWindows()
+        # cv.namedWindow('Bounding Box Smoothed', cv.WINDOW_FREERATIO)
+        # cv.imshow('Bounding Box Smoothed', self.__img)
+        # if cv.waitKey(0) & 0xff == 27:
+        #     cv.destroyAllWindows()
 
         return ccs_text, self.__ccs_non_text
 
@@ -68,10 +68,10 @@ class TextSegmenter:
             x, y, w, h = cc_non_text_new.get_rect()
             cv.rectangle(self.__img, (x, y), (x + w, y + h), 0, -1)
 
-        cv.namedWindow('Bounding Box*', cv.WINDOW_FREERATIO)
-        cv.imshow('Bounding Box*', self.__img)
-        if cv.waitKey(0) & 0xff == 27:
-            cv.destroyAllWindows()
+        # cv.namedWindow('Bounding Box*', cv.WINDOW_FREERATIO)
+        # cv.imshow('Bounding Box*', self.__img)
+        # if cv.waitKey(0) & 0xff == 27:
+        #     cv.destroyAllWindows()
 
         return [cc.get_rect() for cc in ccs]
 
@@ -109,15 +109,15 @@ class TextSegmenter:
     def __filter_ws(self):
         kernel = np.ones((1, 5), np.uint8)
         self.__img = cv.morphologyEx(self.__img, cv.MORPH_CLOSE, kernel, iterations=4)
-        cv.namedWindow('Horizontal Closing', cv.WINDOW_FREERATIO)
-        cv.imshow('Horizontal Closing', self.__img)
-        if cv.waitKey(0) & 0xff == 27:
-            cv.destroyAllWindows()
-        self.__get_bounding_box_text_img(2)
-        cv.namedWindow('Bounding Box', cv.WINDOW_FREERATIO)
-        cv.imshow('Bounding Box', self.__img)
-        if cv.waitKey(0) & 0xff == 27:
-            cv.destroyAllWindows()
+        # cv.namedWindow('Horizontal Closing', cv.WINDOW_FREERATIO)
+        # cv.imshow('Horizontal Closing', self.__img)
+        # if cv.waitKey(0) & 0xff == 27:
+        #     cv.destroyAllWindows()
+        # self.__get_bounding_box_text_img(2)
+        # cv.namedWindow('Bounding Box', cv.WINDOW_FREERATIO)
+        # cv.imshow('Bounding Box', self.__img)
+        # if cv.waitKey(0) & 0xff == 27:
+        #     cv.destroyAllWindows()
 
         # hrs = MllClassifier(self.__img).get_next_level_homogeneous_regions()
         ws_filter = WhiteSpaceFilter(self.__img, self.src)
@@ -129,10 +129,10 @@ class TextSegmenter:
 
         self.__get_bounding_box_text_img(1)
 
-        cv.namedWindow('Filtered Bounding Box', cv.WINDOW_FREERATIO)
-        cv.imshow('Filtered Bounding Box', self.__img)
-        if cv.waitKey(0) & 0xff == 27:
-            cv.destroyAllWindows()
+        # cv.namedWindow('Filtered Bounding Box', cv.WINDOW_FREERATIO)
+        # cv.imshow('Filtered Bounding Box', self.__img)
+        # if cv.waitKey(0) & 0xff == 27:
+        #     cv.destroyAllWindows()
 
     def __segment_paragraphs(self, text_blocks):
         new_hrs = []

@@ -33,7 +33,9 @@ class DocumentAnalyzer:
         self.__ccs_text = None
         self.__ccs_non_text = None
         self.__ccs_dict = None
+        self.__img_contoured = None
         self.__img_labeled = None
+        self.__img_contoured_original_size = None
         self.__img_labeled_original_size = None
         self.__debug = debug
         self.__img_name = path.split('/')[-1]
@@ -49,7 +51,8 @@ class DocumentAnalyzer:
         self.__refine_non_text_elements()
         self.__classify_non_text_element()
         self.__label_regions()
-        self.__rescale_img_to_original()
+        self.__img_contoured_original_size = self.__rescale_img_to_original(self.__img_contoured)
+        self.__img_labeled_original_size = self.__rescale_img_to_original(self.__img_labeled)
         self.__store_output_img()
 
     def __preprocess(self):
@@ -102,13 +105,15 @@ class DocumentAnalyzer:
                                             self.__ccs_non_text).classify_non_text_elements()
 
     def __label_regions(self):
-        self.__img_labeled = self.__region_refiner.label_regions(self.__img_resized, self.__ccs_dict)
+        self.__img_contoured, self.__img_labeled = self.__region_refiner.label_regions(self.__img_resized,
+                                                                                       self.__ccs_dict)
 
         if self.__debug:
+            show_and_wait('Contoured', self.__img_contoured)
             show_and_wait('Labeled', self.__img_labeled)
 
-    def __rescale_img_to_original(self):
-        self.__img_labeled_original_size = self.__preprocessor.resize_img_to_original_size(self.__img_labeled)
+    def __rescale_img_to_original(self, img):
+        return self.__preprocessor.resize_img_to_original_size(img)
 
     def __store_output_img(self):
         if not os.path.exists('./out'):
@@ -117,4 +122,5 @@ class DocumentAnalyzer:
         if not os.path.exists('./out/img'):
             os.mkdir('./out/img')
 
-        cv.imwrite(f'./out/img/{self.__img_name}', self.__img_labeled_original_size)
+        # cv.imwrite(f'./out/img/{self.__img_name}', self.__img_contoured_original_size)
+        cv.imwrite(f'./out/img/labelled-{self.__img_name}', self.__img_labeled_original_size)
