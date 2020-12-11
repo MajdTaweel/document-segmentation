@@ -1,26 +1,33 @@
 import cv2 as cv
 import numpy as np
+import util.img as iu
 
 from connected_components.connected_components import get_connected_components, intersection_percentage, intersection
 
 
 class RegionRefiner:
 
-    def __init__(self):
+    def __init__(self, debug=False):
         self.__colors = {
             'Paragraph': ((73, 48, 0), (255, 255, 255)),
-            'Heading': ((40, 40, 214), (255, 255, 255)),
+            'Negative Text': ((40, 40, 214), (255, 255, 255)),
             'H Line': ((0, 127, 247), (255, 255, 255)),
             'V Line': ((73, 191, 7252), (0, 0, 0)),
             'Table': ((183, 226, 234), (0, 0, 0)),
             'Separator': ((36, 0, 71), (255, 255, 255)),
             'Image': ((199, 136, 86), (255, 255, 255))
         }
+        self.__debug = debug
 
-    @staticmethod
-    def remove_intersected_regions(img_shape, ccs_text, ccs_non_text):
-        img_text = np.zeros(img_shape, np.uint8)
-        img_non_text = np.zeros(img_shape, np.uint8)
+    def remove_intersected_regions(self, img_text, ccs_non_text):
+        img_text = img_text.copy()
+        ccs_non_text = ccs_non_text.copy()
+        kernel = np.ones((3, 1), np.uint8)
+        # dilation = cv.dilate(img_text, kernel)
+        closing = cv.morphologyEx(img_text, cv.MORPH_CLOSE, kernel, iterations=4)
+        ccs_text = get_connected_components(closing, external=True)
+        img_text = np.zeros(img_text.shape, np.uint8)
+        img_non_text = np.zeros(img_text.shape, np.uint8)
         cv.drawContours(img_text, [cc.get_contour() for cc in ccs_text], -1, 255, -1)
         cv.drawContours(img_non_text, [cc.get_contour() for cc in ccs_non_text], -1, 255, -1)
         ccs_non_text = get_connected_components(img_non_text, external=True)
@@ -49,19 +56,14 @@ class RegionRefiner:
                     ccs_non_text_new.append(cc_text)
                     break
 
-        ccs_non_text = ccs_non_text.copy()
         ccs_non_text.extend(ccs_non_text_new)
 
-        # cv.namedWindow('IMg text1', cv.WINDOW_FREERATIO)
-        # cv.imshow('IMg text1', img_text)
-        # if cv.waitKey(0) & 0xff == 27:
-        #     cv.destroyAllWindows()
-        kernel = np.ones((5, 1), np.uint8)
+        if self.__debug:
+            iu.show_and_wait('Intersections Grouping', img_text)
+        kernel = np.ones((3, 3), np.uint8)
         img_text = cv.morphologyEx(img_text, cv.MORPH_CLOSE, kernel, iterations=4)
-        # cv.namedWindow('IMg text2', cv.WINDOW_FREERATIO)
-        # cv.imshow('IMg text2', img_text)
-        # if cv.waitKey(0) & 0xff == 27:
-        #     cv.destroyAllWindows()
+        if self.__debug:
+            iu.show_and_wait('Intersections Grouping (Morph-Close)', img_text)
         ccs_text = get_connected_components(img_text, external=True)
         return ccs_text, ccs_non_text, ccs_text_new, ccs_non_text_new
 
@@ -82,7 +84,8 @@ class RegionRefiner:
                     intersections_sum += rects_intersection[2] * rects_intersection[3]
             if areas_sum > 0 and intersections_sum / areas_sum >= 0.9:
                 x, y, w, h = cc1.get_rect()
-                cv.rectangle(img_non_text, (x, y), (x + w, y + h), 255, -1)
+                cv.rectangle(img_non_text, (x, y), (x + w, y + h), 0, -1)
+                cv.rectangle(img_non_text, (x, y), (x + w, y + h), 255, 1)
         return get_connected_components(img_non_text, external=True)
 
     def label_regions(self, img, ccs):

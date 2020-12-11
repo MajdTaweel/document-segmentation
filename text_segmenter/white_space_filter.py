@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import util.img as iu
 
 from connected_components.connected_components import ConnectedComponent, is_vertically_aligned
 from mll_classifier.mll_classifier import Region
@@ -7,18 +8,14 @@ from mll_classifier.mll_classifier import Region
 
 class WhiteSpaceFilter:
 
-    def __init__(self, img, src):
+    def __init__(self, img, src, debug=False):
         self.__img = img.copy()
-        self.src = src.copy()
+        self.__src = src.copy()
+        self.__debug = debug
 
     def filter_ws(self, hr: Region):
         # self.__ccs_text_large = self.__remove_large_text_ccs(hrs)
         self.__filter_ws_rects(hr)
-        # TODO: Remove
-        # cv.namedWindow('Color filtered', cv.WINDOW_FREERATIO)
-        # cv.imshow('Color filtered', self.src)
-        # if cv.waitKey(0) & 0xff == 27:
-        #     cv.destroyAllWindows()
 
         return self.__img
 
@@ -40,13 +37,13 @@ class WhiteSpaceFilter:
     def __filter_ws_rects(self, hr: Region):
         hcs = hr.get_hcs()
 
-        # TODO: Remove
-        for i, hc in enumerate(hcs):
-            color = [0, 0, 0]
-            color[i % 3] = 255
-            for cc in hc:
-                x, y, w, h = cc.get_rect()
-                cv.rectangle(self.src, (x, y), (x + w, y + h), tuple(color), -1)
+        if self.__debug:
+            for i, hc in enumerate(hcs):
+                color = [0, 0, 0]
+                color[i % 3] = 255
+                for cc in hc:
+                    x, y, w, h = cc.get_rect()
+                    cv.rectangle(self.__src, (x, y), (x + w, y + h), tuple(color), -1)
 
         only_single_cc_chains = True
         for hc in hcs:
@@ -62,6 +59,9 @@ class WhiteSpaceFilter:
         for i in range(2):
             self.__filter_within_col_candidates(ws_rects, i)
 
+        if self.__debug:
+            iu.show_and_wait('Whitespace filtering (color coded)', self.__src)
+
     def __filter_within_col_candidates(self, ws_rects, run):
         ws_max_gaps_pairs = self.__group_ws(ws_rects, run)
         for col in ws_max_gaps_pairs:
@@ -69,10 +69,6 @@ class WhiteSpaceFilter:
 
             if is_within_col:
                 for ws_max_gap_pair in col:
-                    # cropped_ws = WhiteSpaceFilter.__crop_img(self.__img, ws_max_gap_pair['rect'])
-                    # ws_length = cropped_ws.shape[0] * cropped_ws.shape[1]
-                    # ws_sum = np.sum(cropped_ws)
-                    # if ws_length > 0 and ws_sum / ws_length != 255:
                     self.__remove_ws(ws_max_gap_pair['rect'])
                     self.__remove_ws_color(ws_max_gap_pair['rect'], (0, 0, 100))
                     ws_max_gap_pair['is_removed'] = True
@@ -81,17 +77,9 @@ class WhiteSpaceFilter:
 
     def __filter_top_and_bottom_within_col_candidates(self, col):
         if col[0]['is_within_col_candidate']:
-            # cropped_ws = WhiteSpaceFilter.__crop_img(self.__img, col[0]['rect'])
-            # ws_length = cropped_ws.shape[0] * cropped_ws.shape[1]
-            # ws_sum = np.sum(cropped_ws)
-            # if ws_length > 0 and ws_sum / ws_length != 255:
             self.__remove_ws(col[0]['rect'])
             self.__remove_ws_color(col[0]['rect'], (100, 0, 100))
         if col[-1]['is_within_col_candidate']:
-            # cropped_ws = WhiteSpaceFilter.__crop_img(self.__img, col[-1]['rect'])
-            # ws_length = cropped_ws.shape[0] * cropped_ws.shape[1]
-            # ws_sum = np.sum(cropped_ws)
-            # if ws_length > 0 and ws_sum / ws_length != 255:
             self.__remove_ws(col[-1]['rect'])
             self.__remove_ws_color(col[-1]['rect'], (100, 0, 100))
 
@@ -177,10 +165,6 @@ class WhiteSpaceFilter:
         num_ws = len(ws_rects_row)
         while num_ws > n:
             rnws_min = min(ws_rects_row, key=lambda ws: ws['rect'][2])
-            # cropped_ws = WhiteSpaceFilter.__crop_img(self.__img, rnws_min['rect'])
-            # ws_length = cropped_ws.shape[0] * cropped_ws.shape[1]
-            # ws_sum = np.sum(cropped_ws)
-            # if ws_length > 0 and ws_sum / ws_length != 255:
             self.__remove_ws(rnws_min['rect'])
             self.__remove_ws_color(rnws_min['rect'], (100, 0, 0))
             rnws_min['is_removed'] = True
@@ -188,8 +172,6 @@ class WhiteSpaceFilter:
             num_ws -= 1
 
     def __remove_isolated_ws(self, hcs, ws_rects, i):
-        # if i == 0 or i == len(ws_rects) - 1:
-        #     return
         ws_curr_idx = 0
         ws_rects_row = ws_rects[i]
 
@@ -223,10 +205,6 @@ class WhiteSpaceFilter:
                         break
 
             if is_isolated:
-                # cropped_ws = WhiteSpaceFilter.__crop_img(self.__img, ws_rects_row[ws_curr_idx]['rect'])
-                # ws_length = cropped_ws.shape[0] * cropped_ws.shape[1]
-                # ws_sum = np.sum(cropped_ws)
-                # if ws_length > 0 and ws_sum / ws_length != 255:
                 self.__remove_ws(ws_rects_row[ws_curr_idx]['rect'])
                 self.__remove_ws_color(ws_rects_row[ws_curr_idx]['rect'], (0, 100, 0))
                 ws_rects_row[ws_curr_idx]['is_removed'] = True
@@ -241,10 +219,10 @@ class WhiteSpaceFilter:
         x, y, w, h = cc.get_rect()
         cv.rectangle(self.__img, (x, y), (x + w, y + h), 0, -1)
 
-    # TODO: REMOVE
     def __remove_ws_color(self, rect, color):
-        x, y, w, h = rect
-        cv.rectangle(self.src, (x, y), (x + w, y + h), color, -1)
+        if self.__debug:
+            x, y, w, h = rect
+            cv.rectangle(self.__src, (x, y), (x + w, y + h), color, -1)
 
     @staticmethod
     def __get_ws_rect(cc: ConnectedComponent):

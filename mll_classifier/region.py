@@ -8,7 +8,7 @@ T_VAR = 1.3
 
 
 class Region:
-    def __init__(self, rect, img, t_var=T_VAR):
+    def __init__(self, rect, img, t_var=T_VAR, debug=False):
         super().__init__()
         self.__rect = rect
         self.__root_img = img.copy()

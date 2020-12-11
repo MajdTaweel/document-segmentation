@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import util.img as iu
 
 from connected_components.connected_components import get_connected_components, union
 from mll_classifier.mll_classifier import MllClassifier
@@ -11,55 +12,24 @@ THETA = 1.2
 
 
 class TextSegmenter:
-    def __init__(self, img, ccs_text, ccs_non_text, src):
+    def __init__(self, img, ccs_text, ccs_non_text, src, debug=False):
         super().__init__()
         self.__img = img.copy()
         self.__ccs_text = ccs_text.copy()
         self.__ccs_non_text = ccs_non_text.copy()
         self.src = src.copy()
+        self.__debug = debug
 
     def segment_text(self):
         self.__filter_ws()
         text_blocks = self.__get_text_blocks()
-
-        # TODO: REMOVE
-        img_blocks = self.src.copy()
-        for text_block in text_blocks:
-            x, y, w, h = text_block
-            cv.rectangle(img_blocks, (x, y), (x + w, y + h), (255, 0, 0), 4)
-        # cv.namedWindow('Text Blocks', cv.WINDOW_FREERATIO)
-        # cv.imshow('Text Blocks', img_blocks)
-        # if cv.waitKey(0) & 0xff == 27:
-        #     cv.destroyAllWindows()
-
         hrs = self.__segment_paragraphs(text_blocks)
-        # TODO: REMOVE
-        img_blocks = self.src.copy()
-        for hr in hrs:
-            x, y, w, h = hr.get_rect()
-            cv.rectangle(img_blocks, (x, y), (x + w, y + h), (255, 0, 255), 4)
-        # cv.namedWindow('Paragraphs', cv.WINDOW_FREERATIO)
-        # cv.imshow('Paragraphs', img_blocks)
-        # if cv.waitKey(0) & 0xff == 27:
-        #     cv.destroyAllWindows()
-
         ccs_text = self.__smooth_regions(hrs)
-
-        # TODO: REMOVE
-        # cv.namedWindow('Bounding Box Smoothed', cv.WINDOW_FREERATIO)
-        # cv.imshow('Bounding Box Smoothed', self.__img)
-        # if cv.waitKey(0) & 0xff == 27:
-        #     cv.destroyAllWindows()
-
         return ccs_text, self.__ccs_non_text
 
     def __get_text_blocks(self):
-        kernel = np.ones((5, 1), np.uint8)
-        dilation = cv.dilate(self.__img.copy(), kernel)
-        closing = cv.morphologyEx(dilation, cv.MORPH_CLOSE, kernel, iterations=4)
-        ccs = get_connected_components(closing, external=True)
-        ccs, self.__ccs_non_text, ccs_text_new, ccs_non_text_new = RegionRefiner.remove_intersected_regions(
-            closing.shape, ccs, self.__ccs_non_text)
+        ccs, self.__ccs_non_text, ccs_text_new, ccs_non_text_new = RegionRefiner(
+            self.__debug).remove_intersected_regions(self.__img, self.__ccs_non_text)
         for cc_text_new in ccs_text_new:
             x, y, w, h = cc_text_new.get_rect()
             cv.rectangle(self.__img, (x, y + 3), (x + w, y + h - 3), 255, -1)
@@ -68,77 +38,43 @@ class TextSegmenter:
             x, y, w, h = cc_non_text_new.get_rect()
             cv.rectangle(self.__img, (x, y), (x + w, y + h), 0, -1)
 
-        # cv.namedWindow('Bounding Box*', cv.WINDOW_FREERATIO)
-        # cv.imshow('Bounding Box*', self.__img)
-        # if cv.waitKey(0) & 0xff == 27:
-        #     cv.destroyAllWindows()
+        # text_blocks = [cc.get_rect() for cc in ccs]
+        text_blocks = ccs.copy()
 
-        return [cc.get_rect() for cc in ccs]
+        if self.__debug:
+            img_blocks = self.src.copy()
+            for text_block in text_blocks:
+                x, y, w, h = text_block.get_rect()
+                cv.rectangle(img_blocks, (x, y), (x + w, y + h), (255, 0, 0), 4)
+            iu.show_and_wait('Text Blocks', img_blocks)
 
-        # text_blocks = []
-        # text_block = []
-        # for i, rect in enumerate(rects):
-        #     if len(text_block) == 0:
-        #         text_block.append(rect)
-        #         rects.pop(i)
-        #     elif len(text_block) == 1 and is_vertically_aligned(text_block[0], rect):
-        #         text_block.append(rect)
-        #         rects.pop(i)
-        #     elif is_vertically_aligned(text_block[0], rect) and is_horizontally_aligned_with(text_block[-1], rect):
-        #         text_block[-1] = union(text_block[-1], rect)
-        #         rects.pop(i)
-        #     else:
-        #         text_blocks.append(text_block)
-        #         text_block = [rect]
-        #
-        # if len(text_block) > 0:
-        #     text_blocks.append(text_block)
-        #
-        # blank = np.zeros(self.__img.shape, np.uint8)
-        # for text_block in text_blocks:
-        #     for rect in text_block:
-        #         x, y, w, h = rect
-        #         cv.rectangle(blank, (x, y), (x + w, y + h), 255, -1)
-        # cv.namedWindow('Text Blocks', cv.WINDOW_FREERATIO)
-        # cv.imshow('Text Blocks', blank)
-        # if cv.waitKey(0) & 0xff == 27:
-        #     cv.destroyAllWindows()
-        #
-        # return text_blocks
+        return text_blocks
 
     def __filter_ws(self):
         kernel = np.ones((1, 5), np.uint8)
         self.__img = cv.morphologyEx(self.__img, cv.MORPH_CLOSE, kernel, iterations=4)
-        # cv.namedWindow('Horizontal Closing', cv.WINDOW_FREERATIO)
-        # cv.imshow('Horizontal Closing', self.__img)
-        # if cv.waitKey(0) & 0xff == 27:
-        #     cv.destroyAllWindows()
-        # self.__get_bounding_box_text_img(2)
-        # cv.namedWindow('Bounding Box', cv.WINDOW_FREERATIO)
-        # cv.imshow('Bounding Box', self.__img)
-        # if cv.waitKey(0) & 0xff == 27:
-        #     cv.destroyAllWindows()
+        if self.__debug:
+            iu.show_and_wait('Horizontal Closing', self.__img)
 
-        # hrs = MllClassifier(self.__img).get_next_level_homogeneous_regions()
-        ws_filter = WhiteSpaceFilter(self.__img, self.src)
-        # for hr in hrs:
-        #     self.__img = ws_filter.filter_ws(hr)
+        ws_filter = WhiteSpaceFilter(self.__img, self.src, self.__debug)
 
         hr = MllClassifier(self.__img).get_region()
         self.__img = ws_filter.filter_ws(hr)
 
         self.__get_bounding_box_text_img(1)
 
-        # cv.namedWindow('Filtered Bounding Box', cv.WINDOW_FREERATIO)
-        # cv.imshow('Filtered Bounding Box', self.__img)
-        # if cv.waitKey(0) & 0xff == 27:
-        #     cv.destroyAllWindows()
-
     def __segment_paragraphs(self, text_blocks):
         new_hrs = []
         for text_block in text_blocks:
             next_hrs = self.__segment_region_paragraphs(text_block)
             new_hrs.extend(next_hrs)
+
+        if self.__debug:
+            img_blocks = self.src.copy()
+            for hr in new_hrs:
+                x, y, w, h = hr.get_rect()
+                cv.rectangle(img_blocks, (x, y), (x + w, y + h), (255, 0, 255), 4)
+            iu.show_and_wait('Paragraphs', img_blocks)
 
         return new_hrs
 
@@ -189,51 +125,6 @@ class TextSegmenter:
 
         return split_hrs
 
-    # def __group_text_blocks(self, hr: Region):
-    #     hcs = self.__get_hcs_ws_rects(hr.get_hcs())
-    #
-    #     if len(hcs) < 2:
-    #         return hcs
-    #
-    #     text_blocks = []
-    #     i = 0
-    #     while i < len(hcs) - 1:
-    #         t = hcs[i][0]
-    #         bnn_idx = self.__get_first_bnn(t, hcs[i + 1])
-    #         if bnn_idx is None:
-    #             break
-    #
-    #         bnn, slice_idx = self.__unite_chain(t, bnn_idx, hcs[i + 1])
-    #         hcs[i + 1] = hcs[i + 1][slice_idx:]
-    #
-    #         t, slice_idx = self.__unite_chain(bnn, 0, hcs[i])
-    #         hcs[i] = hcs[i][slice_idx:]
-    #
-    #         text_block = [t, bnn]
-    #
-    #         i += 1
-    #
-    # @staticmethod
-    # def __get_first_bnn(t, hc_rects):
-    #     for i, rect in enumerate(hc_rects):
-    #         if is_vertically_aligned(t, rect):
-    #             return i
-    #
-    #     return None
-    #
-    # @staticmethod
-    # def __unite_chain(t, bnn_idx, hc):
-    #     bnn = hc[bnn_idx]
-    #     i = bnn_idx + 1
-    #     while i < len(hc):
-    #         if is_vertically_aligned(t, hc[i]):
-    #             bnn = union(bnn, hc[i])
-    #         else:
-    #             break
-    #         i += 1
-    #
-    #     return bnn, i
-
     def __smooth_regions(self, hrs):
         ccs_text = []
         for hr in hrs:
@@ -243,29 +134,28 @@ class TextSegmenter:
         blank = np.zeros(self.__img.shape[:2], np.uint8)
         self.__img = cv.drawContours(blank, [cc.get_contour() for cc in ccs_text], -1, 255, -1)
 
+        if self.__debug:
+            iu.show_and_wait('Bounding Box (Smoothed)', self.__img)
+
         return ccs_text
 
     @staticmethod
     def __smooth_region(hr: Region):
         img = hr.get_img()
 
-        kernel_height = 10
+        kernel_height = 5
         wl = [wl_i[3] for wl_i in hr.get_wl_h()]
-        if len(wl) > 0:
+        if len(wl) > 0 and np.max(wl) > 0:
             kernel_height = round(2 * np.percentile(wl, 75))
 
-        kernel_width = 5
-        ws = hr.set_features().get_features()['ws']
-        if len(ws) > 0:
-            kernel_width = round(2 * np.percentile(ws, 75))
+        kernel_width = 1
+        # ws = hr.set_features().get_features()['ws']
+        # if len(ws) > 0 and np.max(ws) > 0:
+        #     kernel_width = round(2 * np.percentile(ws, 75))
 
-        # kernel = np.ones((kernel_height, kernel_width), np.uint8)
-        kernel = np.ones((5, 1), np.uint8)
+        kernel = np.ones((kernel_height, kernel_width), np.uint8)
+        # kernel = np.ones((5, 1), np.uint8)
         closing = cv.morphologyEx(img, cv.MORPH_CLOSE, kernel, iterations=4)
-
-        # kernel = np.ones((kernel_height * 2, kernel_width * 2), np.uint8)
-        # kernel = np.ones((20, 10), np.uint8)
-        # closing = cv.morphologyEx(closing, cv.MORPH_CLOSE, kernel, iterations=1)
 
         return get_connected_components(closing, (hr.get_rect()[0], hr.get_rect()[1]))
 
@@ -278,6 +168,9 @@ class TextSegmenter:
             cv.rectangle(blank, (x, y + c), (x + w, y + h - c), 255, -1)
 
         self.__img = blank
+
+        if self.__debug:
+            iu.show_and_wait('Bounding Box', self.__img)
 
         return self.__img
 
@@ -310,7 +203,10 @@ class TextSegmenter:
         return text_lines
 
     def __get_text_block_region(self, text_block):
-        hr = Region(text_block, self.__img)
+        blank = np.zeros(self.__img.shape, np.uint8)
+        mask = cv.drawContours(blank, [text_block.get_contour()], -1, 255, -1)
+        img_hr = self.__img * mask
+        hr = Region(text_block.get_rect(), img_hr)
 
         hcs = hr.get_hcs()
 
@@ -322,8 +218,9 @@ class TextSegmenter:
                 for cc in hc[1:]:
                     rect = union(rect, cc.get_rect())
                 cv.rectangle(self.__img, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), 255, -1)
+                cv.rectangle(img_hr, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), 255, -1)
 
         if not has_one_sentence_in_each_line:
-            hr = Region(text_block, self.__img)
+            hr = Region(text_block.get_rect(), img_hr)
 
         return hr

@@ -45,9 +45,6 @@ class DocumentAnalyzer:
         self.__img_resized = self.__preprocessor.get_resized_img()
         preprocessed = self.__preprocessor.preprocess()
 
-        if self.__debug:
-            iu.show_and_wait('Preprocessed', preprocessed)
-
         return preprocessed
 
     def __apply_heuristic_filter(self, preprocessed):
@@ -73,7 +70,7 @@ class DocumentAnalyzer:
 
     def __segment_text(self):
         self.__ccs_text, self.__ccs_non_text = TextSegmenter(self.__img_text, self.__ccs_text, self.__ccs_non_text,
-                                                             self.__img_resized).segment_text()
+                                                             self.__img_resized, self.__debug).segment_text()
 
         if self.__debug:
             ccs_and_colors = [

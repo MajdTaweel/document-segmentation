@@ -25,7 +25,7 @@ class NonTextClassifier:
 
         return {
             'Paragraph': self.__ccs_text,
-            'Heading': self.__ccs_negative_text,
+            'Negative Text': self.__ccs_negative_text,
             'H Line': self.__h_lines,
             'V Line': self.__v_lines,
             'Table': self.__tables,
@@ -57,27 +57,23 @@ class NonTextClassifier:
             self.__ccs_non_text.remove(cc)
 
     def __is_negative_text(self, cc: ConnectedComponent):
-        dens = cc.get_dens()
-        if cc.get_dens() < 0.9 or cc.get_dens() >= 0.99:
+        if cc.get_dens() < 0.9:
             return False
 
         x, y, w, h = cc.get_rect()
         blank = np.zeros((h, w), np.uint8)
         negative_candidate = cv.drawContours(blank, [cc.get_contour()], -1, 255, -1)
         negative_candidate = cv.bitwise_not(negative_candidate)
+        # blank = np.ones((h, w), np.uint8)
+        # negative_candidate = cv.drawContours(blank, [cc.get_contour()], -1, 0, -1)
 
-        mll = MllClassifier(negative_candidate)
+        ccs_text, ccs_non_text = MllClassifier(negative_candidate).apply_multilayer_classification()
 
-        ccs_non_text = mll.apply_multilayer_classification()
-        region = mll.get_region()
-
-        ccs_text = region.get_ccs()
         area_text = 0
-
         for cc_text in ccs_text:
             area_text += cc_text.get_area()
-        area_non_text = 0
 
+        area_non_text = 0
         for cc_non_text in ccs_non_text:
             area_non_text += cc_non_text.get_area()
 

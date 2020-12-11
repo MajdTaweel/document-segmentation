@@ -11,10 +11,10 @@ T_VAR = 1.3
 
 
 class MllClassifier:
-    def __init__(self, img):
+    def __init__(self, img, debug=False):
         super().__init__()
         self.__img = img.copy()
-        self.__region = Region((0, 0, self.__img.shape[1], self.__img.shape[0]), self.__img)
+        self.__region = Region((0, 0, self.__img.shape[1], self.__img.shape[0]), self.__img, debug=debug)
 
     def classify_non_text_ccs(self):
         ccs_non_text = self.__apply_recursive_filter()
@@ -22,7 +22,7 @@ class MllClassifier:
 
     def __apply_recursive_filter(self):
         non_text = self.__apply_multilevel_classification()
-        non_text2 = self.apply_multilayer_classification()
+        non_text2 = self.__apply_multilayer_classification()
         non_text.extend(non_text2)
         return non_text
 
@@ -56,7 +56,7 @@ class MllClassifier:
 
         return non_text
 
-    def apply_multilayer_classification(self) -> List[ConnectedComponent]:
+    def __apply_multilayer_classification(self) -> List[ConnectedComponent]:
         non_text = []
         modified = True
         while modified:
@@ -67,7 +67,7 @@ class MllClassifier:
             ]
             sum_u = np.sum(regions[0].get_img())
             sum_v = 0
-            regions = self.__get_homogeneous_regions(regions)
+            regions = MllClassifier.__get_homogeneous_regions(regions)
 
             for region in regions:
                 region_modified, _, non_text2 = RecursiveFilter(region).filter()
@@ -84,7 +84,13 @@ class MllClassifier:
 
         return non_text
 
-    def __get_homogeneous_regions(self, regions):
+    def apply_multilayer_classification(self):
+        ccs_non_text = self.__apply_multilayer_classification()
+        ccs_text = self.get_region().get_ccs()
+        return ccs_text, ccs_non_text
+
+    @staticmethod
+    def __get_homogeneous_regions(regions):
         i = 0
         new_regions = []
         while i < len(regions):
@@ -94,24 +100,6 @@ class MllClassifier:
 
             i += 1
         return new_regions
-
-    def get_next_level_homogeneous_regions(self):
-        return self.__get_homogeneous_regions([self.__region])
-
-    def get_highest_level_homogeneous_regions(self):
-        regions = [self.__region]
-        finished_regions = []
-        while len(regions) > 0:
-            region_changed, next_regions = regions[0].get_next_level_homogeneous_regions()
-
-            if region_changed:
-                regions.extend(next_regions)
-                regions.pop(0)
-            else:
-                finished_regions.extend(next_regions)
-                regions.pop(0)
-
-        return finished_regions
 
     def get_region(self) -> Region:
         return self.__region
