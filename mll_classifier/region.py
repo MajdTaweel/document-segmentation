@@ -1,7 +1,7 @@
-from typing import List
-
 import numpy as np
+import matplotlib.pyplot as plt
 
+from typing import List
 from connected_components.connected_components import get_connected_components, set_ccs_neighbors, ConnectedComponent
 
 T_VAR = 1.3
@@ -14,6 +14,7 @@ class Region:
         self.__root_img = img.copy()
         self.__img = self.__crop_image(img.copy())
         self.__t_var = t_var
+        self.__debug = debug
         self.__set_all_attrs()
         self.__ccs = get_connected_components(self.__img, (rect[0], rect[1]))
         self.__hcs = set_ccs_neighbors(self.__ccs)
@@ -190,6 +191,8 @@ class Region:
         self.__p_v = np.sum(self.__img, 0, np.uint8) / 255
         self.__z_h = self.__get_bi_level_projection__(self.__p_h)
         self.__z_v = self.__get_bi_level_projection__(self.__p_v)
+        if self.__debug:
+            self.__plot_projections()
 
     def __get_bi_level_projection__(self, p):
         p = p.copy()
@@ -414,3 +417,41 @@ class Region:
 
     def get_hcs(self) -> List[List[ConnectedComponent]]:
         return self.__hcs.copy()
+
+    def __plot_projections(self):
+        h = np.arange(self.__root_img.shape[0])
+        w = np.arange(self.__root_img.shape[1])
+        fig, axs = plt.subplots(2, 2)
+        axs[0, 0].plot(self.__p_h, h)
+        axs[0, 0].invert_yaxis()
+        axs[0, 0].set_title('Horizontal Projection')
+        axs[0, 0].set(xlabel=r'$P_H$', ylabel='Height')
+
+        # axs[0, 1].plot(self.__z_h, h, 'tab:orange')
+        for (x1, x2), (y1, y2) in zip(zip(self.__z_h, self.__z_h[1:]), zip(h, h[1:])):
+            if x1 == x2:
+                axs[0, 1].vlines(x=x1, ymin=y1, ymax=y2, linewidth=2, color='orange')
+        axs[0, 1].invert_yaxis()
+        axs[0, 1].set_title('Bi-level Horizontal Projection')
+        axs[0, 1].set(xlabel=r'$Z_H$', ylabel='Height')
+
+        axs[1, 0].plot(w, self.__p_v, 'tab:green')
+        axs[1, 0].invert_yaxis()
+        axs[1, 0].set_title('Vertical Projection')
+        axs[1, 0].set(xlabel='Width', ylabel=r'$P_V$')
+
+        # axs[1, 1].plot(w, self.__z_v, 'tab:red')
+        for (x1, x2), (y1, y2) in zip(zip(w, w[1:]), zip(self.__z_v, self.__z_v[1:])):
+            if y1 == y2:
+                axs[1, 1].hlines(y=y1, xmin=x1, xmax=x2, linewidth=2, color='r')
+        axs[1, 1].invert_yaxis()
+        axs[1, 1].set_title('Bi-level Vertical Projection')
+        axs[1, 1].set(xlabel='Width', ylabel=r'$Z_V$')
+
+        # for ax in axs.flat:
+        #     ax.label_outer()
+
+        plt.tight_layout()
+        plt.draw()
+        plt.waitforbuttonpress(0)
+        plt.close(fig)

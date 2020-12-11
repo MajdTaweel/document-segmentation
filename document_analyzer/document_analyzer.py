@@ -58,7 +58,8 @@ class DocumentAnalyzer:
             iu.draw_contours_then_show_and_wait('Heuristic Filter', self.__img_resized, ccs_and_colors)
 
     def __apply_mll_classifier(self):
-        self.__ccs_text, mll_ccs_non_text, img_text = MllClassifier(self.__img_text).classify_non_text_ccs()
+        self.__ccs_text, mll_ccs_non_text, img_text = MllClassifier(self.__img_text,
+                                                                    self.__debug).classify_non_text_ccs()
         self.__ccs_non_text.extend(mll_ccs_non_text)
 
         if self.__debug:
