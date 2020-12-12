@@ -2,7 +2,7 @@ import cv2 as cv
 
 
 def show_and_wait(title, img):
-    cv.namedWindow(title, cv.WINDOW_FREERATIO)
+    cv.namedWindow(title, cv.WINDOW_KEEPRATIO)
     cv.imshow(title, img)
     if cv.waitKey(0) & 0xff == 27:
         cv.destroyAllWindows()

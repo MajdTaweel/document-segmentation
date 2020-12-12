@@ -187,8 +187,8 @@ class Region:
         self.__set_variances()
 
     def __set_projections(self):
-        self.__p_h = np.sum(self.__img, 1, np.uint8) / 255
-        self.__p_v = np.sum(self.__img, 0, np.uint8) / 255
+        self.__p_h = np.sum(self.__img, 1, np.uint8)
+        self.__p_v = np.sum(self.__img, 0, np.uint8)
         self.__z_h = self.__get_bi_level_projection__(self.__p_h)
         self.__z_v = self.__get_bi_level_projection__(self.__p_v)
         if self.__debug:
@@ -436,7 +436,6 @@ class Region:
         axs[0, 1].set(xlabel=r'$Z_H$', ylabel='Height')
 
         axs[1, 0].plot(w, self.__p_v, 'tab:green')
-        axs[1, 0].invert_yaxis()
         axs[1, 0].set_title('Vertical Projection')
         axs[1, 0].set(xlabel='Width', ylabel=r'$P_V$')
 
@@ -444,7 +443,6 @@ class Region:
         for (x1, x2), (y1, y2) in zip(zip(w, w[1:]), zip(self.__z_v, self.__z_v[1:])):
             if y1 == y2:
                 axs[1, 1].hlines(y=y1, xmin=x1, xmax=x2, linewidth=2, color='r')
-        axs[1, 1].invert_yaxis()
         axs[1, 1].set_title('Bi-level Vertical Projection')
         axs[1, 1].set(xlabel='Width', ylabel=r'$Z_V$')
 

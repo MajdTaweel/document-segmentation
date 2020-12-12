@@ -4,7 +4,7 @@ venv
 __pycache__
 img
 out
-report/output
+report/out
 *.png
 *.jpg
 *.jpeg

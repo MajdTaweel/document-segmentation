@@ -1,0 +1,262 @@
+%! Author = Majd Taweel
+%! Date = 30-Nov-20
+
+% Preamble
+\documentclass[12pt]{report}
+
+% Packages
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage[table]{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{multicol}
+
+% Document
+\begin{document}
+
+    \title{
+        \includegraphics[width=0.5\textwidth]{img/BZU-Logo.png}\\
+        Document Layout Analysis\\
+        \footnotesize Using Minimum Homogeneity Structure
+    }
+
+    \author{
+        {Majd Taweel - 1161422}\\
+        {Ibrahim Muala - 1160346}\\\\
+
+        {Computer Vision}\\
+        {Instructor: Aziz Qaroush}
+    }
+    \maketitle
+
+    \pagenumbering{Roman}
+    \chapter*{Abstract}
+
+    This report demonstrates our implementation of the Minimum Homogeneity Structure (MHS) Algorithm.
+    It firstly states the problem encountered, the motivation around solving such problem and a brief description
+    of the system proposed.
+    Furthermore, it shows an overview of the proposed system.
+    It further provides results achieved after implementing the proposed system.
+    Finally, it shows the conclusion achieved from implementing this algorithm.
+
+    \tableofcontents
+
+    \listoffigures
+
+    \chapter{Introduction}
+    \pagenumbering{arabic}
+    \setcounter{page}{1}
+
+    Document layout analysis is a rising topic in modern days.
+    It has received more attention due to the need of exporting old printed documents into a digital version.
+    This is important because organizations of all sizes and types need to have better and faster
+    access to their previously recorded data, archives and reports that were printed on physical paper.
+    These documents are firstly analysed using an accurate document analysis algorithm and the piped to an
+    Optical Character Recognition (OCR) model to deduce the text content these documents contain.
+
+    The MHS algorithm \cite{mhs}, analyzes documents on several different layers sequentially before classifying the
+    objects contained in the document.
+    Our implementatiot first starts with pre-processing, outputting a binary (black and white) image.
+    Then the binary image continues to text and non-text classification layer, which separates text and non-text
+    content.
+    This classification layer is actually what is known as Minimum Homogeneity Algorithm (MHA) \cite{mha}, the previous version
+    of the MHS algorithm.
+    This results into two different document for text and non-text content.
+    Those two documents then passes different processes.
+    Text lines are extracted from the text document and then paragraphs are separated using these extracted lines.
+    Text regions are then deduced from the resulted paragraphs.
+    The non-text document continues to yet another classification layer that then determines each non-text element's
+    type (line, table, separator, image and negative-text).
+    After that, the deduced regions from the text and non-text documents are refined and then labelled, resulting in
+    the final page layout.
+
+    The rest of the report is organized in the following manner, Chapter \ref{ch:2} gives an overview of the system.
+    Chapter \ref{ch:3} demonstrates results of our implementation.
+    Chapter \ref{ch:4} shows the limitations of our algorithm.
+    Finally, the conclusion is found in Chapter \ref{ch:5}.
+
+
+    \chapter{System Overview}\label{ch:2}
+
+    The MHS algorithm consists of several layers as stated before.
+    These layers are explained in the following sections.
+
+
+    \section{Pre-processing}
+
+    This layer prepares the image for classification, and the quality of the operation it does on the image are reflected
+    on the remainder of the layers.
+    The binary image's quality greatly effects the rest of the operations.
+    Take for instance, bla bla bla
+
+    \begin{figure}
+        \centering
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{img/img.png}
+            \caption{Original Image.}
+            \label{img:org}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{img/bin.png}
+            \caption{Binary Image.}
+            \label{img:bin}
+        \end{subfigure}
+        \caption{Image Pre-Processing and Binarization.}
+        \label{fig:bin}
+   \end{figure}
+
+    The operations performed in this layer are as follows:
+    \begin{enumerate}
+        \item If the image is colored it is converted to a grayscale image.
+        \item The image is slightly smoothed to remove some of the noise it may contain.
+        \item The smoothed image is converted to a binary image.
+        \item The binary image is resized to a certain resolution so that it does not take
+        unreasonable computation time if its original resolution is very big.
+    \end{enumerate}
+
+    Fig.~\ref{fig:bin} shows a sample image and its respective binary image.
+
+    % \section{Connected Components Analysis}
+
+    \section{Heuristic Filter}
+
+    The heuristic filter filters the image from obvious non-text elements depending on some heuristics, hence, the name
+    heuristic filter.
+
+    Specifically, there are four properties that a Connected Component (CC) is considered non-text if it suffice any of them:
+    \begin{enumerate}
+        \item The area of the CC is less or equals to 6 pixels (considered as noise).
+        \item The bounding box of CC includes 4 or more other CCs.
+        \item The density of the CC is less than 0.06.
+        \item The height to width rate or width to height rate is less than 0.06.
+    \end{enumerate}
+    
+    The non-text components determined from the previous step is then removed from the binary image, achieving a new image
+    that almost only contains text.
+    Actually, in \cite{mhs}, the authors stated that the fourth condition is removed due to the miss-classification of the Korean
+    character (--).
+    However, this condition is preserved in our implementation for two reasons, first, many characters and text
+    elements will be classified as non-text throughout the layers, and we will mostly be dealing with English documents.
+    This condition works well in identifying lines, removing it for the sake of one character isn't justified since many other text
+    components will be miss-classified at first. Nonetheless, this miss-classification will be dealt with later.
+
+    Fig.~\ref{img:heuristic-filter} shows the contours of text CCs (green) and non-text CCs (red) after going through the heuristic filter.
+    It can be noticed as mentioned before, many text components we're classified as non-text.
+    This inaccuracy must be dealt with either ways.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.45\textwidth]{img/heuristic-filter.png}}
+        \caption{CCs Contours After Applying The Heuristic Filter.}
+        \label{img:heuristic-filter}
+    \end{figure}
+
+
+    \section{Multilevel/Multi-layer Classification}
+
+    This layer consists of two sub-layers, multilevel classification and multi-layer classification.
+    It also contains a recursive filter that is applied on the regions extracted from both sub-layers.
+
+    In multilevel classification, the image is split into homogeneous regions iteratively.
+    This splitting is done both horizontally and vertically until all regions are homogeneous or can't
+    be split anymore.
+
+    The splitting is executed by leveraging horizontal and vertical porijections of images. In our
+    implementation, a region is considered as an object, as soon as a region object is initialized,
+    its projections are extracted. Fig.~\ref{img:projections} show such projections.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=\textwidth]{img/projections.png}}
+        \caption{Horizontal and Vertical Projections and Bi-Level Projections of The Whole Image.}
+        \label{img:projections}
+    \end{figure}
+
+    As we can notice from Fig.~\ref{img:projections}, the original projections is very rough and need to
+    presented in a better way so we can benefit from them.
+    That is why the bi-level projections is extracted by transforming each value that is more than 0 to 1.
+    These projections represent horizontal and vertical lines in the image they were extracted from.
+    Regions are split in regard with these lines. The splitting happens on what may call foreign lines.
+    Those can be defined as white or black lines that have very different heights (widths in vertical projections)
+    than its neighbors. Most likely, these lines have larger heights (widths in vertical projections). Such a line
+    can be interpreted as headings (black line), or large whitespace (white line) separating chapters or paragraphs.
+
+    After achieving the homogeneous regions, the recursive filter is applied on each of these regions.
+    The filtered regions is further split into higher order homogeneous regions (if possible) and the
+    recursive filter is applied again. This is repeated until the regions can't be modified anymore.
+    Detailed specification of the recursive filter are provided in \cite{mha}.
+
+    In multi-layer classification, the image is split into the first-level homogeneous regions (only once),
+    then the recursive filter is applied on those regions. This operation is repeated until the regions
+    can't be modified anymore.
+    Note that, when repeating this operation, the first-level homogeneous regions are not further split,
+    instead we re-split the whole image and retrieve the new first-level homogeneous regions.
+    The details of multilevel and multi-layer classification layer can be found in \cite{mhs} and \cite{mha}.
+
+    Fig.~\ref{img:mll} shows text and non-text components after the multilevel and multi-layer classification.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.45\textwidth]{img/mll.png}}
+        \caption{CCs Contours After Applying Multilevel and Multi-Layer Classification.}
+        \label{img:mll}
+    \end{figure}
+
+    \section{Whitespace Filter}
+    
+
+    \section{Text Segmentation}
+
+    After the multilevel and multi-layer classification, the text image is almost ready to be
+    segmented into paragraphs.
+    Now, this layer will double as a text segmenter and a text and non-text classifier.
+    As we seen from the steps before and the images produced from them, some elements were
+    miss-classified, but, these elements almost always reside inside a region that only contains
+    elements from their correct class.
+
+    Firstly, we perform morphological closing that only closes horizontally.
+    Such closing can be achieved by using for example, a kernel of height 1 and width 5.
+    This will connect horizontally close characters with each other.
+    Then, we filter the remaining whitespace depending on some heuristics as described in \cite{ws}.
+    Fig.~\ref{img:ws-filter} is a color coded image that shows horizontally chains
+    (blue, green and red) and removed whitespace between them
+    (dark blue, dark green, dark red and dark purple).
+    Dark blue represents removed whitespace due to its small size, dark green for being isolated,
+    dark red for being within-column and dark purple for being labeled as a candidate within-column
+    whitespace and resides at the top or bottom of a vertical whitespace chain.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=\textwidth]{img/ws-filter.png}}
+        \caption{Horizontal Chains and Removed Whitespace Between Them.}
+        \label{img:ws-filter}
+    \end{figure}
+
+%    \section{Non-Text Classification}
+%    \section{Region Refinement}
+
+    
+    \chapter{Results and Discussions}\label{ch:3}
+    randd
+
+    \chapter{Limitations}\label{ch:4}
+    limit
+
+
+    \chapter{Conclusion}\label{ch:5}
+
+    To sum up, Document layout analysis is a difficult process that can only produce sufficient outcomes through several
+    levels of processing and computations, as can be seen from the implementation of this system.
+    The layers in this system are based on carefully extracted properties from many documents with different layouts.
+    These layers are heavily dependant on statistics and observations found in most documents, which what makes this
+    system accurate.
+    Nonetheless, it still has room for some improvements.
+
+    \bibliographystyle{IEEEtran}
+    \bibliography{IEEEabrv, references}
+
+\end{document}

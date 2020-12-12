@@ -7,11 +7,12 @@ from mll_classifier.mll_classifier import MllClassifier
 
 class NonTextClassifier:
 
-    def __init__(self, img_shape, ccs_text, ccs_non_text):
+    def __init__(self, img_shape, ccs_text, ccs_non_text, rect_ccs_non_text=[]):
         super().__init__()
         self.__img_shape = img_shape
         self.__ccs_text = ccs_text.copy()
         self.__ccs_non_text = ccs_non_text.copy()
+        self.__rect_ccs_non_text = rect_ccs_non_text.copy()
         self.__ccs_negative_text = []
         self.__h_lines = []
         self.__v_lines = []
@@ -23,14 +24,17 @@ class NonTextClassifier:
         for cc in self.__ccs_non_text.copy():
             self.__classify_cc(cc)
 
+        images = self.__graphics.copy()
+        images.extend(self.__rect_ccs_non_text)
+
         return {
-            'Paragraph': self.__ccs_text,
-            'Negative Text': self.__ccs_negative_text,
-            'H Line': self.__h_lines,
-            'V Line': self.__v_lines,
-            'Table': self.__tables,
-            'Separator': self.__separators,
-            'Image': self.__graphics
+            'Paragraph': self.__ccs_text.copy(),
+            'Negative Text': self.__ccs_negative_text.copy(),
+            'H Line': self.__h_lines.copy(),
+            'V Line': self.__v_lines.copy(),
+            'Table': self.__tables.copy(),
+            'Separator': self.__separators.copy(),
+            'Image': images
         }
 
     def __classify_cc(self, cc: ConnectedComponent):

@@ -12,7 +12,7 @@ class RegionRefiner:
             'Paragraph': ((73, 48, 0), (255, 255, 255)),
             'Negative Text': ((40, 40, 214), (255, 255, 255)),
             'H Line': ((0, 127, 247), (255, 255, 255)),
-            'V Line': ((73, 191, 7252), (0, 0, 0)),
+            'V Line': ((73, 191, 252), (0, 0, 0)),
             'Table': ((183, 226, 234), (0, 0, 0)),
             'Separator': ((36, 0, 71), (255, 255, 255)),
             'Image': ((199, 136, 86), (255, 255, 255))
@@ -68,7 +68,9 @@ class RegionRefiner:
         return ccs_text, ccs_non_text, ccs_text_new, ccs_non_text_new
 
     def refine_non_text_regions(self, img_shape, ccs_non_text):
+        rect_ccs = []
         img_non_text = np.zeros(img_shape, np.uint8)
+        img_rect_non_text = np.zeros(img_shape, np.uint8)
         cv.drawContours(img_non_text, [cc.get_contour() for cc in ccs_non_text], -1, 255, -1)
         for cc1 in ccs_non_text:
             if cc1.get_dens() <= 0.02:
@@ -85,18 +87,20 @@ class RegionRefiner:
             if areas_sum > 0 and intersections_sum / areas_sum >= 0.9:
                 x, y, w, h = cc1.get_rect()
                 cv.rectangle(img_non_text, (x, y), (x + w, y + h), 0, -1)
-                cv.rectangle(img_non_text, (x, y), (x + w, y + h), 255, 1)
-        return get_connected_components(img_non_text, external=True)
+                cv.rectangle(img_rect_non_text, (x, y), (x + w, y + h), 255, -1)
+                rect_ccs.append(cc1)
+        return get_connected_components(img_non_text), get_connected_components(img_rect_non_text, external=True)
 
     def label_regions(self, img, ccs):
         img = img.copy()
-        img_labeled = img.copy()
+        contoured_regions = img.copy()
+        labeled_regions = img.copy()
         for key in ccs.keys():
             for cc in ccs[key]:
-                cv.drawContours(img, [cc.get_contour()], -1, self.__colors[key][0], 2)
-                cv.drawContours(img_labeled, [cc.get_contour()], -1, self.__colors[key][0], 2)
+                cv.drawContours(contoured_regions, [cc.get_contour()], -1, self.__colors[key][0], 2)
+                cv.drawContours(labeled_regions, [cc.get_contour()], -1, self.__colors[key][0], 2)
                 x, y, _, _ = cc.get_rect()
                 ((w, h), b) = cv.getTextSize(key, cv.FONT_HERSHEY_DUPLEX, 0.5, 1)
-                cv.rectangle(img_labeled, (x + 2, y + 2), (x + w + 4, y + h + 4), self.__colors[key][0], -1)
-                cv.putText(img_labeled, key, (x + 4, y + b + 4), cv.FONT_HERSHEY_DUPLEX, 0.5, self.__colors[key][1], 1)
-        return img, img_labeled
+                cv.rectangle(labeled_regions, (x + 2, y + 2), (x + w + 4, y + h + 4), self.__colors[key][0], -1)
+                cv.putText(labeled_regions, key, (x + 4, y + b + 4), cv.FONT_HERSHEY_DUPLEX, 0.5, self.__colors[key][1], 1)
+        return cv.addWeighted(contoured_regions, 0.75, img, 0.25, 0), cv.addWeighted(labeled_regions, 0.5, img, 0.5, 0)

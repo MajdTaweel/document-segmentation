@@ -143,7 +143,7 @@ class TextSegmenter:
     def __smooth_region(hr: Region):
         img = hr.get_img()
 
-        kernel_height = 5
+        kernel_height = 3
         wl = [wl_i[3] for wl_i in hr.get_wl_h()]
         if len(wl) > 0 and np.max(wl) > 0:
             kernel_height = round(2 * np.percentile(wl, 75))

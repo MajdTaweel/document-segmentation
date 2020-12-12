@@ -2,40 +2,53 @@
 %! Date = 30-Nov-20
 
 % Preamble
-\documentclass[12pt]{report}
+\documentclass[conference]{IEEEtran}
 
 % Packages
-\usepackage{amsmath}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
 % Document
 \begin{document}
 
     \title{
-    Document Layout Analysis\\
-    \footnotesize Using Minimum Homogeneity Structure
+        \includegraphics[width=0.5\textwidth]{img/BZU-Logo.png}\\
+        Document Layout Analysis\\
+        \footnotesize Using Minimum Homogeneity Structure
     }
-    \author{
-    {Majd Taweel - 1161422}\\
-    {Ibrahim Muala - 1160346}\\\\
 
-    \textbf{Computer Vision}\\
-    \textbf{Instructor:} Aziz Qaroush
+    \author{
+        {Majd Taweel - 1161422}\\
+        {Ibrahim Muala - 1160346}\\\\
+
+        {Computer Vision}\\
+        {Instructor: Aziz Qaroush}
     }
     \maketitle
 
-    \chapter*{Abstract}
-
+    \begin{abstract}
     This report demonstrates our implementation of the Minimum Homogeneity Structure (MHS) Algorithm.
     It firstly states the problem encountered, the motivation around solving such problem and a brief description
     of the system proposed.
-    Second, it shows an overview of the proposed system.
-    Then, it provides some results achieved after implementing the proposed system.
-    Finally, it ends with the conclusion.
+    Furthermore, it shows an overview of the proposed system.
+    It further provides results achieved after implementing the proposed system.
+    Finally, it explains the conclusions achieved from implementing this algorithm.
+    \end{abstract}
 
-    \tableofcontents
+    \begin{IEEEkeywords}
+    Document layout analysis, Minimum homogeneity algorithm, Minimum homogeneity structure, OCR
+    \end{IEEEkeywords}
 
-
-    \chapter{Introduction}
+    \section{Introduction}
 
     Document layout analysis is a rising topic in modern days.
     It has received more attention due to the need of exporting old printed documents into a digital version.
@@ -44,11 +57,23 @@
     These documents are firstly analysed using an accurate document analysis algorithm and the piped to an
     Optical Character Recognition (OCR) model to deduce the text content these documents contain.
 
-    The MHS algorithm analyzes documents on several different layers sequentially before classifying the
-    objects contained in the document.
-    It first starts with some pre-processing, outputting a binary (black and white) image.
+    The MHS algorithm \cite{mhs}, analyzes documents on several different layers sequentially before classifying the
+    objects contained in the document. Fig.~\ref{fig:mhs} provides a block diagram of the MHS algorithm.
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=\linewidth]{img/mhs.jpg}}
+        \caption{Block diagram of the MHS algorithm \cite{mhs}.}
+        \label{fig:mhs}
+    \end{figure}
+    Our implementation first starts with pre-processing, outputting a binary (black and white) image.
     Then the binary image continues to text and non-text classification layer, which separates text and non-text
     content.
+    This classification layer is actually what is known as Minimum Homogeneity Algorithm (MHA) \cite{mha}, the previous version
+    of the MHS algorithm. Fig.~\ref{fig:mha} shows a flowchart of the classification layer (MHA).
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=\linewidth]{img/mha.jpg}}
+        \caption{Flowchart for the classification process (MHA) of the MHS system \cite{mhs}.}
+        \label{fig:mha}
+    \end{figure}
     This results into two different document for text and non-text content.
     Those two documents then passes different processes.
     Text lines are extracted from the text document and then paragraphs are separated using these extracted lines.
@@ -58,54 +83,730 @@
     After that, the deduced regions from the text and non-text documents are refined and then labelled, resulting in
     the final page layout.
 
+    The rest of the report is organized in the following manner, Sect.~\ref{sect:2} gives an overview of the system.
+    Sect.~\ref{sect:3} demonstrates results of our implementation.
+    Sect.~\ref{sect:4} shows the limitations of our algorithm.
+    Finally, the conclusion is found in Sect.~\ref{sect:5}.
 
-    \chapter{System Overview}
 
-    The MHS algorithm consists of several layer as stated before.
+    \section{System Overview}\label{sect:2}
+
+    The MHS algorithm consists of several processes or layers as stated before.
     These layers are explained in the following sections.
 
+    \subsection{Pre-processing}
 
-    \section{Pre-processing}
-
-    This layer prepares the image for classification and the quality of the operation it does on the image are reflected
+    This layer prepares the image for classification, and the quality of the operation it does on the image are reflected
     on the remainder of the layers.
+    The binary image's quality greatly effects the rest of the operations.
+    Take for instance, bla bla bla
+
+    \begin{figure}[htbp]
+        \centering
+        \begin{subfigure}[b]{0.49\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/img.png}
+            \caption{Original Image.}
+            \label{img:org}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.49\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/bin.png}
+            \caption{Binary Image.}
+            \label{img:bin}
+        \end{subfigure}
+        \caption{Image Pre-Processing and Binarization.}
+        \label{fig:bin}
+    \end{figure}
 
     The operations performed in this layer are as follows:
-    \enumerate{
-    \item If the image is colored it is converted to a grayscale image.
-    \item The image is smoothed to remove some of the noise it may contain.
-    \item The smoothed image is converted to a binary image.
-    \item The binary image is resized to a certain resolution so that it does not take unreasonable computation time if
-    its original resolution is very big.
-    }
+    \begin{enumerate}
+        \item If the image is colored it is converted to a grayscale image.
+        \item The image is slightly smoothed to remove some of the noise it may contain.
+        \item The smoothed image is converted to a binary image.
+        \item The binary image is resized to a certain resolution so that it does not take
+        unreasonable computation time if its original resolution is very big.
+    \end{enumerate}
 
+    Fig.~\ref{fig:bin} shows a sample image and its respective binary image.
 
-    \chapter{Heuristic Filter}
+    % \subsection{Connected Components Analysis}
+
+    \subsection{Heuristic Filter}
 
     The heuristic filter filters the image from obvious non-text elements depending on some heuristics, hence, the name
     heuristic filter.
 
+    Specifically, there are four properties that a Connected Component (CC) is considered non-text if it suffice any of them:
+    \begin{enumerate}
+        \item The area of the CC is less or equals to 6 pixels (considered as noise).
+        \item The bounding box of CC includes 4 or more other CCs.
+        \item The density of the CC is less than 0.06.
+        \item The height to width rate or width to height rate is less than 0.06.
+    \end{enumerate}
+    
+    The non-text components determined from the previous step is then removed from the binary image, achieving a new image
+    that almost only contains text.
+    Actually, in \cite{mhs}, the authors stated that the fourth condition is removed due to the miss-classification of the Korean
+    character (--).
+    However, this condition is preserved in our implementation for two reasons, first, many characters and text
+    elements will be classified as non-text throughout the layers, and we will mostly be dealing with English documents.
+    This condition works well in identifying lines, removing it for the sake of one character isn't justified since many other text
+    components will be miss-classified at first. Nonetheless, this miss-classification will be dealt with later.
 
-    \chapter{Multilevel/Multi-layer Classification}
+    Fig.~\ref{img:heuristic-filter} shows the contours of text CCs (green) and non-text CCs (red) after going through the heuristic filter.
+    It can be noticed as mentioned before, many text components we're classified as non-text.
+    This inaccuracy must be dealt with either ways.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/heuristic-filter.png}}
+        \caption{CCs Contours After Applying The Heuristic Filter.}
+        \label{img:heuristic-filter}
+    \end{figure}
+
+
+    \subsection{Multilevel/Multi-layer Classification}
 
     This layer consists of two sub-layers, multilevel classification and multi-layer classification.
     It also contains a recursive filter that is applied on the regions extracted from both sub-layers.
 
-%    \chapter{Postprocessing}
+    In multilevel classification, the image is split into homogeneous regions iteratively.
+    This splitting is done both horizontally and vertically until all regions are homogeneous or can't
+    be split anymore.
 
-%    \chapter{Text Segmentation}
-%
-%
-%    \chapter{Non-Text Classification}
+    The splitting is executed by leveraging horizontal and vertical porijections of images. In our
+    implementation, a region is considered as an object, as soon as a region object is initialized,
+    its projections are extracted. Fig.~\ref{img:projections} show such projections.
 
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=\linewidth]{img/projections.png}}
+        \caption{Horizontal and Vertical Projections and Bi-Level Projections of The Whole Image.}
+        \label{img:projections}
+    \end{figure}
 
-    \chapter{Conclusion}
+    As we can notice from Fig.~\ref{img:projections}, the original projections is very rough and need to
+    presented in a better way so we can benefit from them.
+    That is why the bi-level projections is extracted by transforming each value that is more than 0 to 1.
+    These projections represent horizontal and vertical lines in the image they were extracted from.
+    Regions are split in regard with these lines. The splitting happens on what may call foreign lines.
+    Those can be defined as white or black lines that have very different heights (widths in vertical projections)
+    than its neighbors. Most likely, these lines have larger heights (widths in vertical projections). Such a line
+    can be interpreted as headings (black line), or large whitespace (white line) separating chapters or paragraphs.
+
+    After achieving the homogeneous regions, the recursive filter is applied on each of these regions.
+    The filtered regions is further split into higher order homogeneous regions (if possible) and the
+    recursive filter is applied again. This is repeated until the regions can't be modified anymore.
+    Detailed specification of the recursive filter are provided in \cite{mha}.
+
+    In multi-layer classification, the image is split into the first-level homogeneous regions (only once),
+    then the recursive filter is applied on those regions. This operation is repeated until the regions
+    can't be modified anymore.
+    Note that, when repeating this operation, the first-level homogeneous regions are not further split,
+    instead we re-split the whole image and retrieve the new first-level homogeneous regions.
+    Fig.~\ref{fig:mll} illustrates the flow in the multilevel and multi-layer classification.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=\linewidth]{img/mll-flow.jpg}}
+        \caption{Illustration of multilevel classification and multi-layer classification \cite{mhs}.}
+        \label{fig:mll}
+    \end{figure}
+
+    The details of multilevel and multi-layer classification layer can be found in \cite{mhs} and \cite{mha}.
+
+    Fig.~\ref{img:mll} shows text and non-text components after the multilevel and multi-layer classification.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/mll.png}}
+        \caption{CCs Contours After Applying Multilevel and Multi-Layer Classification.}
+        \label{img:mll}
+    \end{figure}
+
+    \subsection{Text Segmentation}
+
+    After the multilevel and multi-layer classification, the text image is almost ready to be
+    segmented into paragraphs.
+    Now, this layer will double as a text segmenter and a text and non-text classifier.
+    As we seen from the steps before and the images produced from them, some elements were
+    miss-classified, but, these elements almost always reside inside a region that only contains
+    elements from their correct class.
+
+    Firstly, we perform morphological closing that only closes horizontally.
+    Such closing can be achieved by using for example, a kernel of height 1 and width 5.
+    This will connect horizontally close characters with each other.
+    This can be seen in Fig.~\ref{img:morph-close-h}.
+    
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/morph-close.png}}
+        \caption{Applying morphological closing on the text image.}
+        \label{img:morph-close-h}
+    \end{figure}
+    
+    Then, we filter the remaining whitespace depending on some heuristics as described in \cite{ws}.
+    Fig.~\ref{img:ws-filter} is a color coded image that shows horizontally chains
+    (blue, green and red) and removed whitespace between them
+    (dark blue, dark green, dark red and dark purple).
+    Dark blue represents removed whitespace due to its small size, dark green for being isolated,
+    dark red for being within-column and dark purple for being labeled as a candidate within-column
+    whitespace and resides at the top or bottom of a vertical whitespace chain.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/ws-filter.png}}
+        \caption{Horizontal Chains and Removed Whitespace Between Them.}
+        \label{img:ws-filter}
+    \end{figure}
+
+    After going through this process, almost all components belonging to the same line are connected.
+    However, there is still one step before segmenting the paragraph.
+    As noted many times before, some components were miss classified, to fix this we need to move text
+    components classified as non-text to the text image and move the non-text components found in the
+    text image to the non-text image.
+    The way this is implemented is by checking for intersection between components.
+
+    Firstly, the bounding box image is extracted from the text image.
+    The bounding box image is simply an image that contains the bounding box of each CC instead of the CCs
+    themselves. This is demonstrated in Fig.~\ref{img:bb}.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/bb.png}}
+        \caption{Bounding box text image.}
+        \label{img:bb}
+    \end{figure}
+
+    Then, morphological closing is applied to the bounding box image, this time vertically, using a kernel of
+    height 3 and width 1 for example.
+    In our implementation this was done for 4 iterations, to ensure that close components merge appropriately.
+    Then we check for every element in the non-text document, if this element's area is less than some
+    text element and they are almost completely intersected, then thus non-text element is a text element
+    and belongs to the text document.
+    The same thing is repeated for text elements.
+    After these steps, the image in Fig.~\ref{img:intersections} is achieved.
+    
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/intersections.png}}
+        \caption{Adding miss-classified text components to the text image.}
+        \label{img:intersections}
+    \end{figure}
+
+    It can be observed that there are now some extra components added into the text image
+    that aren't connected to the text blocks they are contained in.
+    These are the newly added elements previously found in the non-text image.
+    It can also be noticed that some elements were removed from the text image, which
+    are the elements that were moved to the non-text image.
+    Finally, morphological closing is applied yet again to deduce the boundaries of the text blocks,
+    since the newly added text elements need to be connected to their belonging text blocks.
+    The morphological closing is done both horizontally and vertically this time, in our implementation,
+    a kernel of height 3 and width 3 were used and the closing was done for 4 iterations.
+    It can be observed from Fig.~\ref{img:intersections-morph-close} that the new components are now
+    connected with their text-blocks.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/intersections-morph-close.png}}
+        \caption{Applying morphological closing on the bounding box text image with new components.}
+        \label{img:intersections-morph-close}
+    \end{figure}
+
+    The text image is now finally ready to be segmented into paragraphs.
+    After the text regions have been deduced, each region is separated taking in consideration
+    excluding components intersected with multiple regions.
+    The bounding boxes of each regions can be seen in Fig.~\ref{img:text-blocks}.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/text-blocks.png}}
+        \caption{Bounding boxes of text regions.}
+        \label{img:text-blocks}
+    \end{figure}
+
+    Text regions is segmented by comparing 3 lines at the same time, and when an indented starting
+    or ending line is found the regions is segmented.
+    This can be illustrated in Fig.~\ref{fig:paragraph-segmentation}.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=\linewidth]{img/paragraph-segmentation.jpg}}
+        \caption{Example of paragraph segmentation \cite{mhs}.}
+        \label{fig:paragraph-segmentation}
+    \end{figure}
+
+    When the middle index is pointing to an indented line and the next index is also pointing to one,
+    the region is segmented between the middle and the next index.
+    If only the middle index is pointing to an indented line, the region is split between the previous
+    and the middle index.
+    The purpose of the previous index here is being a reference for comparison, it is used to determine
+    if a line is indented or not by comparing between their widths.
+    The splits segmenting paragraphs can be seen in Fig.~\ref{img:paragraphs}.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/paragraphs.png}}
+        \caption{Bounding boxes of text regions after paragraph segmentation.}
+        \label{img:paragraphs}
+    \end{figure}
+
+    After this, these regions are smoothed using morphological closing, a small
+    3x3 kernel with 4 iterations will suffice.
+    Fig.~\ref{img:paragraphs-smoothed} shows the finalized text regions.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/bb-smoothed.png}}
+        \caption{Smoothed text regions after paragraph segmentation.}
+        \label{img:paragraphs-smoothed}
+    \end{figure}
+
+    \subsection{Region Refinement}
+
+    We now have separate text and non-text documents with the text document finalized.
+    Text regions has already been refined in the text segmentation step.
+    We can see from Fig.~\ref{img:segmented} that text regions are finalized,
+    whereas the image in the top right isn't contoured in the correct matter.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/segmented.png}}
+        \caption{Text and non-text components after non-text classification.}
+        \label{img:segmented}
+    \end{figure}
+
+    To refine non-text regions, for each non-text component we check if the bounding
+    box of this components intersects with other non-text components, and if the
+    intersection between this component and the other smaller components it intersects
+    with is greater than or equals to 0.9, then remove the other smaller components and
+    replace the components with its bounding box. Fig.~\ref{img:refined} shows the
+    regions contours after refinement.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/refined.png}}
+        \caption{Contours of refined regions.}
+        \label{img:refined}
+    \end{figure}
+
+    \subsection{Non-Text Classification}
+
+    This step classifies each non-text component into one of the following classes:
+    \{image, line (horizontal or vertical), separator, negative text\}.
+    The MHS originally classifies tables too, however, in our implementation table
+    classification is not implemented due to its inaccuracy and tables variations
+    that can't yet be effectively classified without using learning algorithms.
+    
+    Firstly, each component with an area less than 50 pixels is considered as noise
+    and then removed.
+    The rest of the components continues on.
+    If the component's density is almost 1 (bigger than or equals to 0.9), then
+    it is a negative text candidate.
+    This candidate is then negated and then passed to the multi-layer classifier.
+    If the sum of the areas of the text components is bigger than the sum of the
+    areas of the non-text ones achieved from the multi-layer classifier, then it
+    is indeed a negative text component.
+    If the component's density is less or equals to 0.1 then this component is a line.
+    The orientation of the line is determined by checking the larger dimension,
+    if its width is larger that its height, then it's a horizontal line, else, it's
+    a vertical line.
+    If the component's density is less than or equals to 0.02 and the component
+    contains text components, then it is classified as a separator.
+    Otherwise, the component is an image.
+
+    After the classification step, text and non-text regions are labeled as shown
+    in Fig.~\ref{img:labeled}, providing the final page layout.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.5\linewidth]{img/labeled.png}}
+        \caption{Labeled final page layout image.}
+        \label{img:labeled}
+    \end{figure}
+
+    \section{Results and Discussions}\label{sect:3}
+    
+    In this section, we will show the layout analysis results of some images from
+    Pattern Recognition \& Image Analysis Research Lab (PRIMA) dataset and their
+    corresponding ground truths.
+    This comparison is illustrated in Fig.~\ref{res:1}, Fig.~\ref{res:2} and Fig.~\ref{res:3}.
+
+    \begin{figure*}[htbp]
+        \centering
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000085.png}
+            \caption{}
+            \label{res:1:85}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000088.png}
+            \caption{}
+            \label{res:1:88}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000126.png}
+            \caption{}
+            \label{res:1:126}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000158.png}
+            \caption{}
+            \label{res:1:158}
+        \end{subfigure}
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000085.png}
+            \caption{}
+            \label{res:1:85:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000088.png}
+            \caption{}
+            \label{res:1:88:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000126.png}
+            \caption{}
+            \label{res:1:126:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000158.png}
+            \caption{}
+            \label{res:1:158:gt}
+        \end{subfigure}
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000190.png}
+            \caption{}
+            \label{res:1:190}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000194.png}
+            \caption{}
+            \label{res:1:194}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000197.png}
+            \caption{}
+            \label{res:1:197}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000201.png}
+            \caption{}
+            \label{res:1:201}
+        \end{subfigure}
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000190.png}
+            \caption{}
+            \label{res:1:190:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000194.png}
+            \caption{}
+            \label{res:1:194:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000197.png}
+            \caption{}
+            \label{res:1:197:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000201.png}
+            \caption{}
+            \label{res:1:201:gt}
+        \end{subfigure}
+
+        \caption{Example 1 of results (a, b, c, d, i, j, k, l) and ground truths (e, f, g, h, m, n, o, p) comparison.}
+        \label{res:1}
+    \end{figure*}
+
+    \begin{figure*}[htbp]
+        \centering
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000213.png}
+            \caption{}
+            \label{res:2:213}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000235.png}
+            \caption{}
+            \label{res:2:235}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000246.png}
+            \caption{}
+            \label{res:2:246}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000249.png}
+            \caption{}
+            \label{res:2:249}
+        \end{subfigure}
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000213.png}
+            \caption{}
+            \label{res:2:213:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000235.png}
+            \caption{}
+            \label{res:2:235:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000246.png}
+            \caption{}
+            \label{res:2:246:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000249.png}
+            \caption{}
+            \label{res:2:249:gt}
+        \end{subfigure}
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000263.png}
+            \caption{}
+            \label{res:2:263}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000274.png}
+            \caption{}
+            \label{res:2:274}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000276.png}
+            \caption{}
+            \label{res:2:276}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000279.png}
+            \caption{}
+            \label{res:2:279}
+        \end{subfigure}
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000263.png}
+            \caption{}
+            \label{res:2:263:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000274.png}
+            \caption{}
+            \label{res:2:274:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000276.png}
+            \caption{}
+            \label{res:2:276:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000279.png}
+            \caption{}
+            \label{res:2:279:gt}
+        \end{subfigure}
+
+        \caption{Example 2 of results (a, b, c, d, i, j, k, l) and ground truths (e, f, g, h, m, n, o, p) comparison.}
+        \label{res:2}
+    \end{figure*}
+
+    \begin{figure*}[htbp]
+        \centering
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000352.png}
+            \caption{}
+            \label{res:3:352}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000354.png}
+            \caption{}
+            \label{res:3:354}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000357.png}
+            \caption{}
+            \label{res:3:357}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000358.png}
+            \caption{}
+            \label{res:3:358}
+        \end{subfigure}
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000352.png}
+            \caption{}
+            \label{res:3:352:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000354.png}
+            \caption{}
+            \label{res:3:354:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000357.png}
+            \caption{}
+            \label{res:3:357:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000358.png}
+            \caption{}
+            \label{res:3:358:gt}
+        \end{subfigure}
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000359.png}
+            \caption{}
+            \label{res:3:359}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000396.png}
+            \caption{}
+            \label{res:3:396}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000407.png}
+            \caption{}
+            \label{res:3:407}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000880.png}
+            \caption{}
+            \label{res:3:880}
+        \end{subfigure}
+
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000359.png}
+            \caption{}
+            \label{res:3:359:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000396.png}
+            \caption{}
+            \label{res:3:396:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000407.png}
+            \caption{}
+            \label{res:3:407:gt}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.22\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/ground truth/00000880.png}
+            \caption{}
+            \label{res:3:880:gt}
+        \end{subfigure}
+
+        \caption{Example 3 of results (a, b, c, d, i, j, k, l) and ground truths (e, f, g, h, m, n, o, p) comparison.}
+        \label{res:3}
+    \end{figure*}
+
+    \section{Limitations}\label{sect:4}
+    
+    The performance of our implementation is reasonable.
+    However it lacks in accuracy.
+    Even though the results looks promising, it still needs improvements in several areas.
+    For instance, the binary image quality needs to be improved substantially in order
+    to classify components correctly.
+    The segmentation process fails hardly for some images, see Fig.~\ref{res:1:201}.
+    In addition, text segmentation still needs improvements, due to the existence of
+    under-segmented areas where text blocks are very close to each other and
+    over-segmented areas where text text lines and/or words are very far from each other.
+    Future work might start by improving these areas.
+    Moreover, the classification of non-text elements is still lacking in identifying
+    tables, headings, headers, footers, graphics, graphs, captions, credits, floating text, drop-capitals
+    and others, which requires great effort to implement.
+    Furthermore, some miss-classification exists in non-text components, some dark images are classified as
+    negative text, where they really are just normal images.
+    Further, negative text is very general, headers and headings for example, can be negative text, hence,
+    identifying the type of the negative text block is important.
+    These are less crucial than the previous faults concerning segmentation, but still worth improving.
+
+    \section{Conclusion}\label{sect:5}
 
     To sum up, Document layout analysis is a difficult process that can only produce sufficient outcomes through several
     levels of processing and computations, as can be seen from the implementation of this system.
-    The layers in this system are based on carefully extracted properties from many documents with different layouts.
-    These layers are heavily dependant on statistics and observations found in most documents, which what makes this
-    system accurate.
-    Nonetheless, it has room for some improvements.
+    The layers in the MHS system are based on carefully extracted properties from many documents with different layouts.
+    However, this system is heavily dependant on the quality of the binary image.
+    In addition, the processes in this system are heavily dependant on statistics and observations found in most
+    documents, which determines the accuracy of the system.
+    Nonetheless, it still has room for some improvements.
+
+    \bibliographystyle{IEEEtran}
+    \bibliography{IEEEabrv, references}
 
 \end{document}
