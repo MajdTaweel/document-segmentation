@@ -97,9 +97,44 @@
     \subsection{Pre-processing}
 
     This layer prepares the image for classification, and the quality of the operation it does on the image are reflected
-    on the remainder of the layers.
-    The binary image's quality greatly effects the rest of the operations.
-    Take for instance, bla bla bla
+    on the remainder of the layers, the binary image's quality greatly effects the rest of the operations.
+    Take for instance, documents that contain light colored text with a white background, the text will
+    match the background in the binary image due to the closeness of its color and the background's.
+    Another example is text separators or lines, sometimes lines are partially merged with the background,
+    because of inconsistencies in the line's thickness along its length.
+    This will cause small parts of the line that were considered from the foreground to be miss-classified as text.
+    Since these lines are probably very close to text regions, there is a high chance that they will be merged
+    together, causing huge issues in deducing text regions, see Fig.~\ref{fig:bad-bin}.
+
+    \begin{figure}[htbp]
+        \centering
+        \begin{subfigure}[b]{0.49\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/201-bin.png}
+            \caption{Binary image with errors.}
+            \label{img:bin-bad}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.49\linewidth}
+            \centering
+            \includegraphics[width=\linewidth]{img/results/00000201.png}
+            \caption{Page layout.}
+            \label{img:pl}
+        \end{subfigure}
+        \caption{Bad layout analysis output due to binarization errors.}
+        \label{fig:bad-bin}
+    \end{figure}
+
+    The operations performed in this layer are as follows:
+    \begin{enumerate}
+        \item If the image is colored it is converted to a grayscale image.
+        \item The image is slightly smoothed to remove some of the noise it may contain.
+        \item The smoothed image is converted to a binary image.
+        \item The binary image is resized to a certain resolution so that it does not take
+        unreasonable computation time if its original resolution is very big.
+    \end{enumerate}
+
+    Fig.~\ref{fig:bin} shows a sample image and its respective binary image.
 
     \begin{figure}[htbp]
         \centering
@@ -119,17 +154,6 @@
         \caption{Image Pre-Processing and Binarization.}
         \label{fig:bin}
     \end{figure}
-
-    The operations performed in this layer are as follows:
-    \begin{enumerate}
-        \item If the image is colored it is converted to a grayscale image.
-        \item The image is slightly smoothed to remove some of the noise it may contain.
-        \item The smoothed image is converted to a binary image.
-        \item The binary image is resized to a certain resolution so that it does not take
-        unreasonable computation time if its original resolution is very big.
-    \end{enumerate}
-
-    Fig.~\ref{fig:bin} shows a sample image and its respective binary image.
 
     % \subsection{Connected Components Analysis}
 
@@ -164,7 +188,6 @@
         \caption{CCs Contours After Applying The Heuristic Filter.}
         \label{img:heuristic-filter}
     \end{figure}
-
 
     \subsection{Multilevel/Multi-layer Classification}
 
@@ -396,7 +419,7 @@
     is indeed a negative text component.
     If the component's density is less or equals to 0.1 then this component is a line.
     The orientation of the line is determined by checking the larger dimension,
-    if its width is larger that its height, then it's a horizontal line, else, it's
+    if its width is larger than its height, then it's a horizontal line, otherwise, it's
     a vertical line.
     If the component's density is less than or equals to 0.02 and the component
     contains text components, then it is classified as a separator.
